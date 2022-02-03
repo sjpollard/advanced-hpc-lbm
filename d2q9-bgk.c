@@ -94,9 +94,9 @@ int initialise(const char* paramfile, const char* obstaclefile,
 */
 int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles);
 int accelerate_flow(const t_param params, t_speed* cells, int* obstacles);
-int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells);
-int rebound(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles);
-int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles);
+int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells/*, int ii, int jj*/);
+int rebound(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles, int ii, int jj);
+int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles, int ii, int jj);
 int write_values(const t_param params, t_speed* cells, int* obstacles, float* av_vels);
 
 /* finalise, including freeing up allocated memory */
@@ -194,9 +194,15 @@ int main(int argc, char* argv[])
 int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles)
 {
   accelerate_flow(params, cells, obstacles);
-  propagate(params, cells, tmp_cells);
-  rebound(params, cells, tmp_cells, obstacles);
-  collision(params, cells, tmp_cells, obstacles);
+  propagate(params, cells, tmp_cells/*, ii, jj*/);
+  for (int jj = 0; jj < params.ny; jj++)
+  {
+    for (int ii = 0; ii < params.nx; ii++)
+    {
+      rebound(params, cells, tmp_cells, obstacles, ii, jj);
+      collision(params, cells, tmp_cells, obstacles, ii, jj);
+    }
+  }
   return EXIT_SUCCESS;
 }
 
@@ -232,7 +238,7 @@ int accelerate_flow(const t_param params, t_speed* cells, int* obstacles)
   return EXIT_SUCCESS;
 }
 
-int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells)
+int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells/*, int ii, int jj*/)
 {
   /* loop over _all_ cells */
   for (int jj = 0; jj < params.ny; jj++)
@@ -263,13 +269,13 @@ int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells)
   return EXIT_SUCCESS;
 }
 
-int rebound(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles)
+int rebound(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles, int ii, int jj)
 {
   /* loop over the cells in the grid */
-  for (int jj = 0; jj < params.ny; jj++)
-  {
-    for (int ii = 0; ii < params.nx; ii++)
-    {
+  //for (int jj = 0; jj < params.ny; jj++)
+  //{
+    //for (int ii = 0; ii < params.nx; ii++)
+    //{
       /* if the cell contains an obstacle */
       if (obstacles[jj*params.nx + ii])
       {
@@ -284,13 +290,13 @@ int rebound(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obsta
         cells[ii + jj*params.nx].speeds[7] = tmp_cells[ii + jj*params.nx].speeds[5];
         cells[ii + jj*params.nx].speeds[8] = tmp_cells[ii + jj*params.nx].speeds[6];
       }
-    }
-  }
+    //}
+  //}
 
   return EXIT_SUCCESS;
 }
 
-int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles)
+int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles, int ii, int jj)
 {
   const float c_sq = 1.f / 3.f; /* square of speed of sound */
   const float w0 = 4.f / 9.f;  /* weighting factor */
@@ -301,10 +307,10 @@ int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obs
   ** NB the collision step is called after
   ** the propagate step and so values of interest
   ** are in the scratch-space grid */
-  for (int jj = 0; jj < params.ny; jj++)
-  {
-    for (int ii = 0; ii < params.nx; ii++)
-    {
+  //for (int jj = 0; jj < params.ny; jj++)
+  //{
+    //for (int ii = 0; ii < params.nx; ii++)
+    //{
       /* don't consider occupied cells */
       if (!obstacles[ii + jj*params.nx])
       {
@@ -387,8 +393,8 @@ int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obs
                                                   * (d_equ[kk] - tmp_cells[ii + jj*params.nx].speeds[kk]);
         }
       }
-    }
-  }
+    //}
+  //}
 
   return EXIT_SUCCESS;
 }
