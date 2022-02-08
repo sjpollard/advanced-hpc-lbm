@@ -92,9 +92,9 @@ int initialise(const char* paramfile, const char* obstaclefile,
 ** timestep calls, in order, the functions:
 ** accelerate_flow(), propagate(), rebound() & collision()
 */
-int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles);
+int timestep(const t_param params, t_speed** cells_ptr, t_speed** tmp_cells_ptr, int* obstacles);
 int accelerate_flow(const t_param params, t_speed* cells, int* obstacles);
-int grid_ops(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles);
+int grid_ops(const t_param params, t_speed** cells, t_speed** tmp_cells, int* obstacles);
 int propagate(const t_param params, t_speed* cells, t_speed* tmp_cells);
 int rebound(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles);
 int collision(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles);
@@ -158,7 +158,7 @@ int main(int argc, char* argv[])
 
   for (int tt = 0; tt < params.maxIters; tt++)
   {
-    timestep(params, cells, tmp_cells, obstacles);
+    timestep(params, &cells, &tmp_cells, obstacles);
     av_vels[tt] = av_velocity(params, cells, obstacles);
 #ifdef DEBUG
     printf("==timestep: %d==\n", tt);
@@ -192,13 +192,13 @@ int main(int argc, char* argv[])
   return EXIT_SUCCESS;
 }
 
-int timestep(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles)
+int timestep(const t_param params, t_speed** cells_ptr, t_speed** tmp_cells_ptr, int* obstacles)
 {
-  accelerate_flow(params, cells, obstacles);
+  accelerate_flow(params, *cells_ptr, obstacles);
   //propagate(params, cells, tmp_cells);
   //rebound(params, cells, tmp_cells, obstacles);
   //collision(params, cells, tmp_cells, obstacles);
-  grid_ops(params, cells, tmp_cells, obstacles);
+  grid_ops(params, cells_ptr, tmp_cells_ptr, obstacles);
   return EXIT_SUCCESS;
 }
 
@@ -234,8 +234,10 @@ int accelerate_flow(const t_param params, t_speed* cells, int* obstacles)
   return EXIT_SUCCESS;
 }
 
-int grid_ops(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obstacles)
+int grid_ops(const t_param params, t_speed** cells_ptr, t_speed** tmp_cells_ptr, int* obstacles)
 {
+  t_speed* cells = *cells_ptr;
+  t_speed* tmp_cells = *tmp_cells_ptr;
   for (int jj = 0; jj < params.ny; jj++)
   {
     for (int ii = 0; ii < params.nx; ii++)
@@ -361,22 +363,9 @@ int grid_ops(const t_param params, t_speed* cells, t_speed* tmp_cells, int* obst
       }
     }
   }
-  for (int jj = 0; jj < params.ny; jj++)
-  {
-    for (int ii = 0; ii < params.nx; ii++)
-    { 
-      cells[ii + jj*params.nx].speeds[0] = tmp_cells[ii + jj*params.nx].speeds[0];
-      cells[ii + jj*params.nx].speeds[1] = tmp_cells[ii + jj*params.nx].speeds[1];
-      cells[ii + jj*params.nx].speeds[2] = tmp_cells[ii + jj*params.nx].speeds[2];
-      cells[ii + jj*params.nx].speeds[3] = tmp_cells[ii + jj*params.nx].speeds[3];
-      cells[ii + jj*params.nx].speeds[4] = tmp_cells[ii + jj*params.nx].speeds[4];
-      cells[ii + jj*params.nx].speeds[5] = tmp_cells[ii + jj*params.nx].speeds[5];
-      cells[ii + jj*params.nx].speeds[6] = tmp_cells[ii + jj*params.nx].speeds[6];
-      cells[ii + jj*params.nx].speeds[7] = tmp_cells[ii + jj*params.nx].speeds[7];
-      cells[ii + jj*params.nx].speeds[8] = tmp_cells[ii + jj*params.nx].speeds[8];
-    }
-  }
-  
+  t_speed* temp = *cells_ptr;
+  *cells_ptr = *tmp_cells_ptr;
+  *tmp_cells_ptr = temp;
   return EXIT_SUCCESS;
 }
 
