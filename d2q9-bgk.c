@@ -294,17 +294,17 @@ int grid_ops(const t_param params, t_speed** cells_ptr, t_speed** tmp_cells_ptr,
         float u_x = (tmp_cells[ii + jj*params.nx].speeds[1]
                       + tmp_cells[ii + jj*params.nx].speeds[5]
                       + tmp_cells[ii + jj*params.nx].speeds[8]
-                      - (tmp_cells[ii + jj*params.nx].speeds[3]
-                         + tmp_cells[ii + jj*params.nx].speeds[6]
-                         + tmp_cells[ii + jj*params.nx].speeds[7]))
+                      - tmp_cells[ii + jj*params.nx].speeds[3]
+                         - tmp_cells[ii + jj*params.nx].speeds[6]
+                         - tmp_cells[ii + jj*params.nx].speeds[7])
                      / local_density;
         /* compute y velocity component */
         float u_y = (tmp_cells[ii + jj*params.nx].speeds[2]
                       + tmp_cells[ii + jj*params.nx].speeds[5]
                       + tmp_cells[ii + jj*params.nx].speeds[6]
-                      - (tmp_cells[ii + jj*params.nx].speeds[4]
-                         + tmp_cells[ii + jj*params.nx].speeds[7]
-                         + tmp_cells[ii + jj*params.nx].speeds[8]))
+                      - tmp_cells[ii + jj*params.nx].speeds[4]
+                         - tmp_cells[ii + jj*params.nx].speeds[7]
+                         - tmp_cells[ii + jj*params.nx].speeds[8])
                      / local_density;
 
         /* velocity squared */
@@ -558,17 +558,17 @@ float av_velocity(const t_param params, t_speed* cells, int* obstacles)
         float u_x = (cells[ii + jj*params.nx].speeds[1]
                       + cells[ii + jj*params.nx].speeds[5]
                       + cells[ii + jj*params.nx].speeds[8]
-                      - (cells[ii + jj*params.nx].speeds[3]
-                         + cells[ii + jj*params.nx].speeds[6]
-                         + cells[ii + jj*params.nx].speeds[7]))
+                      - cells[ii + jj*params.nx].speeds[3]
+                         - cells[ii + jj*params.nx].speeds[6]
+                         - cells[ii + jj*params.nx].speeds[7])
                      / local_density;
         /* compute y velocity component */
         float u_y = (cells[ii + jj*params.nx].speeds[2]
                       + cells[ii + jj*params.nx].speeds[5]
                       + cells[ii + jj*params.nx].speeds[6]
-                      - (cells[ii + jj*params.nx].speeds[4]
-                         + cells[ii + jj*params.nx].speeds[7]
-                         + cells[ii + jj*params.nx].speeds[8]))
+                      - cells[ii + jj*params.nx].speeds[4]
+                         - cells[ii + jj*params.nx].speeds[7]
+                         - cells[ii + jj*params.nx].speeds[8])
                      / local_density;
         /* accumulate the norm of x- and y- velocity components */
         tot_u += sqrtf((u_x * u_x) + (u_y * u_y));
