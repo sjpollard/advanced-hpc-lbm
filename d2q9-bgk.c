@@ -245,6 +245,7 @@ int grid_ops(const t_param params, t_speed** cells_ptr, t_speed** tmp_cells_ptr,
   const float d1 = 0.5 * 3.f * 3.f;
   const float d2 = 0.5 * 3.f;
 
+  float local_density_i;
   t_speed* cells = *cells_ptr;
   t_speed* tmp_cells = *tmp_cells_ptr;
   for (int jj = 0; jj < params.ny; jj++)
@@ -272,7 +273,7 @@ int grid_ops(const t_param params, t_speed** cells_ptr, t_speed** tmp_cells_ptr,
       {
         /* called after propagate, so taking values from scratch space
         ** mirroring, and writing into main grid */
-        t_speed temp = tmp_cells[ii + jj*params.nx];
+        const t_speed temp = tmp_cells[ii + jj*params.nx];
         tmp_cells[ii + jj*params.nx].speeds[1] = temp.speeds[3];
         tmp_cells[ii + jj*params.nx].speeds[2] = temp.speeds[4];
         tmp_cells[ii + jj*params.nx].speeds[3] = temp.speeds[1];
@@ -294,7 +295,7 @@ int grid_ops(const t_param params, t_speed** cells_ptr, t_speed** tmp_cells_ptr,
         {
           local_density += tmp_cells[ii + jj*params.nx].speeds[kk];
         }
-        float local_density_i = 1 / local_density;
+        local_density_i = 1 / local_density;
         /* compute x velocity component */
         float u_x = (tmp_cells[ii + jj*params.nx].speeds[1]
                       + tmp_cells[ii + jj*params.nx].speeds[5]
