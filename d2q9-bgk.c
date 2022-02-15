@@ -280,7 +280,7 @@ int grid_ops(const t_param params, t_speed* cells_ptr, t_speed* tmp_cells_ptr, i
   __assume_aligned(tmp_cells.s6, 64);
   __assume_aligned(tmp_cells.s7, 64);
   __assume_aligned(tmp_cells.s8, 64);
-  __assume((params.nx) % 16 == 0);  
+  __assume((params.nx) % 2 == 0);  
   for (int jj = 0; jj < params.ny; jj++)
   { 
     for (int ii = 0; ii < params.nx; ii++)
@@ -306,19 +306,19 @@ int grid_ops(const t_param params, t_speed* cells_ptr, t_speed* tmp_cells_ptr, i
       {
         /* called after propagate, so taking values from scratch space
         ** mirroring, and writing into main grid */
-        const float temp[9] = {tmp_cells.s0[ii + jj*params.nx], tmp_cells.s1[ii + jj*params.nx],
+        /*const float temp[9] = {tmp_cells.s0[ii + jj*params.nx], tmp_cells.s1[ii + jj*params.nx],
                             tmp_cells.s2[ii + jj*params.nx], tmp_cells.s3[ii + jj*params.nx],
                             tmp_cells.s4[ii + jj*params.nx], tmp_cells.s5[ii + jj*params.nx],
                             tmp_cells.s6[ii + jj*params.nx], tmp_cells.s7[ii + jj*params.nx],
-                            tmp_cells.s8[ii + jj*params.nx]};
-        tmp_cells.s1[ii + jj*params.nx] = temp[3];
-        tmp_cells.s2[ii + jj*params.nx] = temp[4];
-        tmp_cells.s3[ii + jj*params.nx] = temp[1];
-        tmp_cells.s4[ii + jj*params.nx] = temp[2];
-        tmp_cells.s5[ii + jj*params.nx] = temp[7];
-        tmp_cells.s6[ii + jj*params.nx] = temp[8];
-        tmp_cells.s7[ii + jj*params.nx] = temp[5];
-        tmp_cells.s8[ii + jj*params.nx] = temp[6];
+                            tmp_cells.s8[ii + jj*params.nx]};*/
+        tmp_cells.s1[ii + jj*params.nx] = cells.s3[x_e + jj*params.nx];
+        tmp_cells.s2[ii + jj*params.nx] = cells.s4[ii + y_n*params.nx];
+        tmp_cells.s3[ii + jj*params.nx] = cells.s1[x_w + jj*params.nx];
+        tmp_cells.s4[ii + jj*params.nx] = cells.s2[ii + y_s*params.nx];
+        tmp_cells.s5[ii + jj*params.nx] = cells.s7[x_e + y_n*params.nx];
+        tmp_cells.s6[ii + jj*params.nx] = cells.s8[x_w + y_n*params.nx];
+        tmp_cells.s7[ii + jj*params.nx] = cells.s5[x_w + y_s*params.nx];
+        tmp_cells.s8[ii + jj*params.nx] = cells.s6[x_e + y_s*params.nx];
       }
 
       /* don't consider occupied cells */
