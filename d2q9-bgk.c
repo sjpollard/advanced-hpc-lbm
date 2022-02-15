@@ -214,7 +214,7 @@ int accelerate_flow(const t_param params, t_speed cells, int* obstacles)
 
   /* modify the 2nd row of the grid */
   int jj = params.ny - 2;
-  /*__assume_aligned(cells.s0, 64);
+  __assume_aligned(cells.s0, 64);
   __assume_aligned(cells.s1, 64);
   __assume_aligned(cells.s2, 64);
   __assume_aligned(cells.s3, 64);
@@ -222,7 +222,8 @@ int accelerate_flow(const t_param params, t_speed cells, int* obstacles)
   __assume_aligned(cells.s5, 64);
   __assume_aligned(cells.s6, 64);
   __assume_aligned(cells.s7, 64);
-  __assume_aligned(cells.s8, 64);*/
+  __assume_aligned(cells.s8, 64);
+  __assume((params.nx) % 2 == 0);
   
   for (int ii = 0; ii < params.nx; ii++)
   {
@@ -261,8 +262,27 @@ int grid_ops(const t_param params, t_speed* cells_ptr, t_speed* tmp_cells_ptr, i
   float local_density_i;
   t_speed cells = *cells_ptr;
   t_speed tmp_cells = *tmp_cells_ptr;
+  __assume_aligned(cells.s0, 64);
+  __assume_aligned(cells.s1, 64);
+  __assume_aligned(cells.s2, 64);
+  __assume_aligned(cells.s3, 64);
+  __assume_aligned(cells.s4, 64);
+  __assume_aligned(cells.s5, 64);
+  __assume_aligned(cells.s6, 64);
+  __assume_aligned(cells.s7, 64);
+  __assume_aligned(cells.s8, 64);
+  __assume_aligned(tmp_cells.s0, 64);
+  __assume_aligned(tmp_cells.s1, 64);
+  __assume_aligned(tmp_cells.s2, 64);
+  __assume_aligned(tmp_cells.s3, 64);
+  __assume_aligned(tmp_cells.s4, 64);
+  __assume_aligned(tmp_cells.s5, 64);
+  __assume_aligned(tmp_cells.s6, 64);
+  __assume_aligned(tmp_cells.s7, 64);
+  __assume_aligned(tmp_cells.s8, 64);
+  __assume((params.nx) % 16 == 0);  
   for (int jj = 0; jj < params.ny; jj++)
-  {
+  { 
     for (int ii = 0; ii < params.nx; ii++)
     {
       int y_n = (jj + 1) % params.ny;
@@ -424,7 +444,17 @@ float av_velocity(const t_param params, t_speed cells, int* obstacles)
 
   /* loop over all non-blocked cells */
   for (int jj = 0; jj < params.ny; jj++)
-  {
+  { 
+    __assume_aligned(cells.s0, 64);
+    __assume_aligned(cells.s1, 64);
+    __assume_aligned(cells.s2, 64);
+    __assume_aligned(cells.s3, 64);
+    __assume_aligned(cells.s4, 64);
+    __assume_aligned(cells.s5, 64);
+    __assume_aligned(cells.s6, 64);
+    __assume_aligned(cells.s7, 64);
+    __assume_aligned(cells.s8, 64);
+    __assume((params.nx) % 2 == 0);   
     for (int ii = 0; ii < params.nx; ii++)
     {
       /* ignore occupied cells */
