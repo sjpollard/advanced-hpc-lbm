@@ -209,8 +209,8 @@ int timestep(const t_param params, t_speed* cells_ptr, t_speed* tmp_cells_ptr, i
 int accelerate_flow(const t_param params, t_speed cells, int* obstacles)
 {
   /* compute weighting factors */
-  float w1 = params.density * params.accel / 9.f;
-  float w2 = params.density * params.accel / 36.f;
+  const float w1 = params.density * params.accel / 9.f;
+  const float w2 = params.density * params.accel / 36.f;
 
   /* modify the 2nd row of the grid */
   int jj = params.ny - 2;
@@ -285,10 +285,10 @@ int grid_ops(const t_param params, t_speed* cells_ptr, t_speed* tmp_cells_ptr, i
   { 
     for (int ii = 0; ii < params.nx; ii++)
     {
-      int y_n = (jj + 1) % params.ny;
-      int x_e = (ii + 1) % params.nx;
-      int y_s = (jj == 0) ? (jj + params.ny - 1) : (jj - 1);
-      int x_w = (ii == 0) ? (ii + params.nx - 1) : (ii - 1);
+      const int y_n = (jj + 1) % params.ny;
+      const int x_e = (ii + 1) % params.nx;
+      const int y_s = (jj == 0) ? (jj + params.ny - 1) : (jj - 1);
+      const int x_w = (ii == 0) ? (ii + params.nx - 1) : (ii - 1);
       /* propagate densities from neighbouring cells, following
       ** appropriate directions of travel and writing into
       ** scratch space grid */
@@ -306,19 +306,19 @@ int grid_ops(const t_param params, t_speed* cells_ptr, t_speed* tmp_cells_ptr, i
       {
         /* called after propagate, so taking values from scratch space
         ** mirroring, and writing into main grid */
-        /*const float temp[9] = {tmp_cells.s0[ii + jj*params.nx], tmp_cells.s1[ii + jj*params.nx],
+        const float temp[9] = {tmp_cells.s0[ii + jj*params.nx], tmp_cells.s1[ii + jj*params.nx],
                             tmp_cells.s2[ii + jj*params.nx], tmp_cells.s3[ii + jj*params.nx],
                             tmp_cells.s4[ii + jj*params.nx], tmp_cells.s5[ii + jj*params.nx],
                             tmp_cells.s6[ii + jj*params.nx], tmp_cells.s7[ii + jj*params.nx],
-                            tmp_cells.s8[ii + jj*params.nx]};*/
-        tmp_cells.s1[ii + jj*params.nx] = cells.s3[x_e + jj*params.nx];
-        tmp_cells.s2[ii + jj*params.nx] = cells.s4[ii + y_n*params.nx];
-        tmp_cells.s3[ii + jj*params.nx] = cells.s1[x_w + jj*params.nx];
-        tmp_cells.s4[ii + jj*params.nx] = cells.s2[ii + y_s*params.nx];
-        tmp_cells.s5[ii + jj*params.nx] = cells.s7[x_e + y_n*params.nx];
-        tmp_cells.s6[ii + jj*params.nx] = cells.s8[x_w + y_n*params.nx];
-        tmp_cells.s7[ii + jj*params.nx] = cells.s5[x_w + y_s*params.nx];
-        tmp_cells.s8[ii + jj*params.nx] = cells.s6[x_e + y_s*params.nx];
+                            tmp_cells.s8[ii + jj*params.nx]};
+        tmp_cells.s1[ii + jj*params.nx] = temp[3];
+        tmp_cells.s2[ii + jj*params.nx] = temp[4];
+        tmp_cells.s3[ii + jj*params.nx] = temp[1];
+        tmp_cells.s4[ii + jj*params.nx] = temp[2];
+        tmp_cells.s5[ii + jj*params.nx] = temp[7];
+        tmp_cells.s6[ii + jj*params.nx] = temp[8];
+        tmp_cells.s7[ii + jj*params.nx] = temp[5];
+        tmp_cells.s8[ii + jj*params.nx] = temp[6];
       }
 
       /* don't consider occupied cells */
@@ -326,11 +326,11 @@ int grid_ops(const t_param params, t_speed* cells_ptr, t_speed* tmp_cells_ptr, i
       {
 
         /* compute local density total */
-        float local_density = 0.f;
+        //float local_density = 0.f;
 
         //for (int kk = 0; kk < NSPEEDS; kk++)
         //{
-        local_density = tmp_cells.s0[ii + jj*params.nx] + tmp_cells.s1[ii + jj*params.nx]
+        const float local_density = tmp_cells.s0[ii + jj*params.nx] + tmp_cells.s1[ii + jj*params.nx]
                       + tmp_cells.s2[ii + jj*params.nx] + tmp_cells.s3[ii + jj*params.nx]
                       + tmp_cells.s4[ii + jj*params.nx] + tmp_cells.s5[ii + jj*params.nx]
                       + tmp_cells.s6[ii + jj*params.nx] + tmp_cells.s7[ii + jj*params.nx]
@@ -338,7 +338,7 @@ int grid_ops(const t_param params, t_speed* cells_ptr, t_speed* tmp_cells_ptr, i
         //}
         local_density_i = 1 / local_density;
         /* compute x velocity component */
-        float u_x = (tmp_cells.s1[ii + jj*params.nx]
+        const float u_x = (tmp_cells.s1[ii + jj*params.nx]
                       + tmp_cells.s5[ii + jj*params.nx]
                       + tmp_cells.s8[ii + jj*params.nx]
                       - tmp_cells.s3[ii + jj*params.nx]
@@ -346,7 +346,7 @@ int grid_ops(const t_param params, t_speed* cells_ptr, t_speed* tmp_cells_ptr, i
                          - tmp_cells.s7[ii + jj*params.nx])
                      * local_density_i;
         /* compute y velocity component */
-        float u_y = (tmp_cells.s2[ii + jj*params.nx]
+        const float u_y = (tmp_cells.s2[ii + jj*params.nx]
                       + tmp_cells.s5[ii + jj*params.nx]
                       + tmp_cells.s6[ii + jj*params.nx]
                       - tmp_cells.s4[ii + jj*params.nx]
@@ -355,7 +355,7 @@ int grid_ops(const t_param params, t_speed* cells_ptr, t_speed* tmp_cells_ptr, i
                      * local_density_i;
 
         /* velocity squared */
-        float u_sq = u_x * u_x + u_y * u_y;
+        const float u_sq = u_x * u_x + u_y * u_y;
 
         /* directional velocity components */
         float u[NSPEEDS];
