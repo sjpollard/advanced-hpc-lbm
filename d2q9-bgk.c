@@ -56,6 +56,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <malloc.h>
+#include <omp.h>
 
 #define NSPEEDS         9
 #define FINALSTATEFILE  "final_state.dat"
@@ -224,6 +225,7 @@ int accelerate_flow(const t_param params, t_speed cells, int* obstacles)
   __assume_aligned(cells.s7, 64);
   __assume_aligned(cells.s8, 64);
   __assume((params.nx) % 16 == 0);
+  #pragma omp parallel for
   for (int ii = 0; ii < params.nx; ii++)
   {
     /* if the cell is not occupied and
@@ -280,6 +282,7 @@ int grid_ops(const t_param params, t_speed* cells_ptr, t_speed* tmp_cells_ptr, i
   __assume_aligned(tmp_cells.s7, 64);
   __assume_aligned(tmp_cells.s8, 64);
   __assume((params.nx) % 16 == 0); 
+  #pragma omp parallel for
   for (int jj = 0; jj < params.ny; jj++)
   { 
     for (int ii = 0; ii < params.nx; ii++)
@@ -419,6 +422,7 @@ float av_velocity(const t_param params, t_speed cells, int* obstacles)
   __assume_aligned(cells.s8, 64);
   __assume((params.nx) % 16 == 0); 
   /* loop over all non-blocked cells */
+  #pragma omp parallel for reduction(+:tot_u, tot_cells)
   for (int jj = 0; jj < params.ny; jj++)
   { 
     for (int ii = 0; ii < params.nx; ii++)
@@ -588,6 +592,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
   float w1 = params->density      / 9.f;
   float w2 = params->density      / 36.f;
 
+  #pragma omp parallel for
   for (int jj = 0; jj < params->ny; jj++)
   {
     for (int ii = 0; ii < params->nx; ii++)
@@ -608,6 +613,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
   }
 
   /* first set all cells in obstacle array to zero */
+  #pragma omp parallel for
   for (int jj = 0; jj < params->ny; jj++)
   {
     for (int ii = 0; ii < params->nx; ii++)
