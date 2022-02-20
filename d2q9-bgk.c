@@ -282,7 +282,6 @@ int grid_ops(const t_param params, t_speed* cells_ptr, t_speed* tmp_cells_ptr, i
   __assume((params.nx) % 16 == 0); 
   for (int jj = 0; jj < params.ny; jj++)
   { 
-    //#pragma ivdep
     for (int ii = 0; ii < params.nx; ii++)
     {
       const int y_n = (jj + 1) % params.ny;
@@ -302,11 +301,6 @@ int grid_ops(const t_param params, t_speed* cells_ptr, t_speed* tmp_cells_ptr, i
       tmp_cells.s7[ii + jj*params.nx] = cells.s7[x_e + y_n*params.nx]; /* south-west */
       tmp_cells.s8[ii + jj*params.nx] = cells.s8[x_w + y_n*params.nx]; /* south-east */
 
-      /* compute local density total */
-      //float local_density = 0.f;
-
-      //for (int kk = 0; kk < NSPEEDS; kk++)
-      //{
       const float local_density = tmp_cells.s0[ii + jj*params.nx] + tmp_cells.s1[ii + jj*params.nx]
                     + tmp_cells.s2[ii + jj*params.nx] + tmp_cells.s3[ii + jj*params.nx]
                     + tmp_cells.s4[ii + jj*params.nx] + tmp_cells.s5[ii + jj*params.nx]
@@ -376,56 +370,7 @@ int grid_ops(const t_param params, t_speed* cells_ptr, t_speed* tmp_cells_ptr, i
       const float d_equ8 = w2 * local_density * (1.f + u[8] * c_sq_i
                                        + (u[8] * u[8]) * d1
                                        - u_sq * d2);
-      
-        /* relaxation step */
-        /*for (int kk = 0; kk < NSPEEDS; kk++)
-        {
-          tmp_cells[ii + jj*params.nx].speeds[kk] = tmp_cells[ii + jj*params.nx].speeds[kk]
-                                                  + params.omega
-                                                  * (d_equ[kk] - tmp_cells[ii + jj*params.nx].speeds[kk]);
-        }*/
 
-        /* called after propagate, so taking values from scratch space
-        ** mirroring, and writing into main grid */
-      /*if (obstacles[ii + jj*params.nx]) {
-        const float temp[9] = {tmp_cells.s0[ii + jj*params.nx], tmp_cells.s1[ii + jj*params.nx],
-                            tmp_cells.s2[ii + jj*params.nx], tmp_cells.s3[ii + jj*params.nx],
-                            tmp_cells.s4[ii + jj*params.nx], tmp_cells.s5[ii + jj*params.nx],
-                            tmp_cells.s6[ii + jj*params.nx], tmp_cells.s7[ii + jj*params.nx],
-                            tmp_cells.s8[ii + jj*params.nx]};
-        float temp = tmp_cells.s1[ii + jj*params.nx];
-        tmp_cells.s1[ii + jj*params.nx] = tmp_cells.s3[ii + jj*params.nx];
-        tmp_cells.s3[ii + jj*params.nx] = temp;
-        temp = tmp_cells.s2[ii + jj*params.nx];
-        tmp_cells.s2[ii + jj*params.nx] = tmp_cells.s4[ii + jj*params.nx];
-        tmp_cells.s4[ii + jj*params.nx] = temp;
-        temp = tmp_cells.s5[ii + jj*params.nx];
-        tmp_cells.s5[ii + jj*params.nx] = tmp_cells.s7[ii + jj*params.nx];
-        tmp_cells.s7[ii + jj*params.nx] = temp;
-        temp = tmp_cells.s6[ii + jj*params.nx];
-        tmp_cells.s6[ii + jj*params.nx] = tmp_cells.s8[ii + jj*params.nx];
-        tmp_cells.s8[ii + jj*params.nx] = temp;
-      }
-      if (!obstacles[ii + jj*params.nx]) {
-        tmp_cells.s0[ii + jj*params.nx] = tmp_cells.s0[ii + jj*params.nx]
-                                        + params.omega * (d_equ0 - tmp_cells.s0[ii + jj*params.nx]);
-        tmp_cells.s1[ii + jj*params.nx] = tmp_cells.s1[ii + jj*params.nx]
-                                        + params.omega * (d_equ1 - tmp_cells.s1[ii + jj*params.nx]);
-        tmp_cells.s2[ii + jj*params.nx] = tmp_cells.s2[ii + jj*params.nx]
-                                        + params.omega * (d_equ2 - tmp_cells.s2[ii + jj*params.nx]);
-        tmp_cells.s3[ii + jj*params.nx] = tmp_cells.s3[ii + jj*params.nx]
-                                        + params.omega * (d_equ3 - tmp_cells.s3[ii + jj*params.nx]);
-        tmp_cells.s4[ii + jj*params.nx] = tmp_cells.s4[ii + jj*params.nx]
-                                        + params.omega * (d_equ4 - tmp_cells.s4[ii + jj*params.nx]);
-        tmp_cells.s5[ii + jj*params.nx] = tmp_cells.s5[ii + jj*params.nx]
-                                        + params.omega * (d_equ5 - tmp_cells.s5[ii + jj*params.nx]);
-        tmp_cells.s6[ii + jj*params.nx] = tmp_cells.s6[ii + jj*params.nx]
-                                        + params.omega * (d_equ6 - tmp_cells.s6[ii + jj*params.nx]);
-        tmp_cells.s7[ii + jj*params.nx] = tmp_cells.s7[ii + jj*params.nx]
-                                        + params.omega * (d_equ7 - tmp_cells.s7[ii + jj*params.nx]);
-        tmp_cells.s8[ii + jj*params.nx] = tmp_cells.s8[ii + jj*params.nx]
-                                        + params.omega * (d_equ8 - tmp_cells.s8[ii + jj*params.nx]);
-      }*/
       tmp_cells.s0[ii + jj*params.nx] = !obstacles[ii + jj*params.nx] ? tmp_cells.s0[ii + jj*params.nx]
                                         + params.omega * (d_equ0 - tmp_cells.s0[ii + jj*params.nx]) : tmp_cells.s0[ii + jj*params.nx];
       float temp = tmp_cells.s1[ii + jj*params.nx];
