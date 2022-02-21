@@ -3,7 +3,7 @@
 EXE=d2q9-bgk
 
 CC=icc
-CFLAGS= -std=c99 -g -Ofast -mtune=broadwell -xAVX -qopenmp
+CFLAGS= -std=c99 -Ofast -mtune=broadwell -xAVX -qopenmp -qopt-report=5 -qopt-report-phase=vec
 LIBS = -lm
 
 FINAL_STATE_FILE=./final_state.dat

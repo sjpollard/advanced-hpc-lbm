@@ -1,5 +1,6 @@
 *.o
 *.advixeproj
+*.optrpt
 
 e000
 d2q9-bgk
@@ -9,7 +10,6 @@ av_vels.dat
 final_state.png
 project_read_only.dflgadvixe
 project_read_only.infoadvixe
-d2q9-bgk.optrpt
 annotations.advidb2
 
 pin.log
