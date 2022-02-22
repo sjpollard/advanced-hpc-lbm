@@ -18,7 +18,7 @@ echo `echo $SLURM_JOB_NODELIST | uniq`
 
 export OMP_NUM_THREADS=28
 export OMP_PLACES=cores
-export OMP_PROC_BIND=true
+export OMP_PROC_BIND=close
 #! Run the executable
 #advixe-cl --collect=survey -- ./d2q9-bgk input_128x128.params obstacles_128x128.dat
 ./d2q9-bgk input_128x128.params obstacles_128x128.dat
