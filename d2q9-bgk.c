@@ -422,7 +422,7 @@ float av_velocity(const t_param params, t_speed cells, int* obstacles)
   __assume_aligned(cells.s8, 64);
   __assume((params.nx) % 16 == 0);
   /* loop over all non-blocked cells */
-  #pragma omp parallel for simd reduction(+:tot_u, tot_cells) //collapse(2)
+  #pragma omp parallel for reduction(+:tot_u, tot_cells) //collapse(2)
   for (int jj = 0; jj < params.ny; jj++)
   { 
     for (int ii = 0; ii < params.nx; ii++)

@@ -49,183 +49,20 @@ LOOP BEGIN at d2q9-bgk.c(228,3) inlined into d2q9-bgk.c(169,5)
 <Remainder loop for vectorization>
 LOOP END
 
-LOOP BEGIN at d2q9-bgk.c(426,3) inlined into d2q9-bgk.c(192,41)
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <obstacles>, stride is unknown to compiler   [ d2q9-bgk.c(431,12) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s0>, masked, stride is unknown to compiler   [ d2q9-bgk.c(436,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s1>, masked, stride is unknown to compiler   [ d2q9-bgk.c(436,55) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s2>, masked, stride is unknown to compiler   [ d2q9-bgk.c(437,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s3>, masked, stride is unknown to compiler   [ d2q9-bgk.c(437,55) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s4>, masked, stride is unknown to compiler   [ d2q9-bgk.c(438,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s5>, masked, stride is unknown to compiler   [ d2q9-bgk.c(438,55) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s6>, masked, stride is unknown to compiler   [ d2q9-bgk.c(439,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s7>, masked, stride is unknown to compiler   [ d2q9-bgk.c(439,55) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s8>, masked, stride is unknown to compiler   [ d2q9-bgk.c(440,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s1>, masked, stride is unknown to compiler   [ d2q9-bgk.c(443,22) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s5>, masked, stride is unknown to compiler   [ d2q9-bgk.c(444,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s8>, masked, stride is unknown to compiler   [ d2q9-bgk.c(445,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s3>, masked, stride is unknown to compiler   [ d2q9-bgk.c(446,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s6>, masked, stride is unknown to compiler   [ d2q9-bgk.c(447,28) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s7>, masked, stride is unknown to compiler   [ d2q9-bgk.c(448,28) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s2>, masked, stride is unknown to compiler   [ d2q9-bgk.c(451,22) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s5>, masked, stride is unknown to compiler   [ d2q9-bgk.c(452,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s6>, masked, stride is unknown to compiler   [ d2q9-bgk.c(453,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s4>, masked, stride is unknown to compiler   [ d2q9-bgk.c(454,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s7>, masked, stride is unknown to compiler   [ d2q9-bgk.c(455,28) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s8>, masked, stride is unknown to compiler   [ d2q9-bgk.c(456,28) ]
-   remark #15305: vectorization support: vector length 8
-   remark #15309: vectorization support: normalized vectorization overhead 0.032
-   remark #15355: vectorization support: at (459:9) is float type reduction   [ d2q9-bgk.c(459,9) ]
-   remark #15355: vectorization support: at (461:11) is int type reduction   [ d2q9-bgk.c(461,11) ]
-   remark #15301: SIMD LOOP WAS VECTORIZED
-   remark #15452: unmasked strided loads: 1 
-   remark #15460: masked strided loads: 21 
-   remark #15475: --- begin vector cost summary ---
-   remark #15476: scalar cost: 114 
-   remark #15477: vector cost: 372.750 
-   remark #15478: estimated potential speedup: 0.300 
-   remark #15486: divides: 1 
-   remark #15488: --- end vector cost summary ---
+LOOP BEGIN at d2q9-bgk.c(425,3) inlined into d2q9-bgk.c(192,41)
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+   remark #15346: vector dependence: assumed OUTPUT dependence between at (459:9) and at (459:9)
+   remark #15346: vector dependence: assumed OUTPUT dependence between at (459:9) and at (459:9)
 
    LOOP BEGIN at d2q9-bgk.c(428,5) inlined into d2q9-bgk.c(192,41)
-      remark #25460: No loop optimizations reported
-   LOOP END
-LOOP END
-
-LOOP BEGIN at d2q9-bgk.c(426,3) inlined into d2q9-bgk.c(192,41)
-<Remainder loop for vectorization>
-
-   LOOP BEGIN at d2q9-bgk.c(428,5) inlined into d2q9-bgk.c(192,41)
-      remark #25460: No loop optimizations reported
+      remark #15344: loop was not vectorized: vector dependence prevents vectorization
+      remark #15346: vector dependence: assumed ANTI dependence between at (459:9) and at (459:9)
+      remark #15346: vector dependence: assumed FLOW dependence between at (459:9) and at (459:9)
+      remark #15346: vector dependence: assumed ANTI dependence between at (459:9) and at (459:9)
    LOOP END
 LOOP END
 
     Report from: Code generation optimizations [cg]
-
-d2q9-bgk.c(422:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(421:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(420:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(419:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(418:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(417:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(416:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(415:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(414:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(422:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(421:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(420:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(419:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(418:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(417:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(416:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(415:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(414:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(422:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(421:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(420:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(419:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(418:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(417:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(416:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(415:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(414:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(422:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(421:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(420:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(419:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(418:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(417:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(416:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(415:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(414:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(422:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(421:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(420:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(419:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(418:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(417:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(416:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(415:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(414:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(422:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(421:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(420:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(419:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(418:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(417:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(416:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(415:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(414:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(422:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(421:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(420:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(419:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(418:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(417:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(416:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(415:32)::main:  Assume directive not useful: removing
-
-d2q9-bgk.c(414:32)::main:  Assume directive not useful: removing
 
 d2q9-bgk.c(422:32)::main:  Assume directive not useful: removing
 
@@ -380,53 +217,16 @@ Begin optimization report for: av_velocity(const t_param, t_speed, int *)
     Report from: Vector optimizations [vec]
 
 
-LOOP BEGIN at d2q9-bgk.c(426,3)
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <obstacles[ii+jj*?]>, stride is unknown to compiler   [ d2q9-bgk.c(431,12) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells>, masked, stride is unknown to compiler   [ d2q9-bgk.c(436,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells>, masked, stride is unknown to compiler   [ d2q9-bgk.c(436,55) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells>, masked, stride is unknown to compiler   [ d2q9-bgk.c(437,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells>, masked, stride is unknown to compiler   [ d2q9-bgk.c(437,55) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells>, masked, stride is unknown to compiler   [ d2q9-bgk.c(438,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells>, masked, stride is unknown to compiler   [ d2q9-bgk.c(438,55) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells>, masked, stride is unknown to compiler   [ d2q9-bgk.c(439,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells>, masked, stride is unknown to compiler   [ d2q9-bgk.c(439,55) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells>, masked, stride is unknown to compiler   [ d2q9-bgk.c(440,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells>, masked, stride is unknown to compiler   [ d2q9-bgk.c(443,22) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells>, masked, stride is unknown to compiler   [ d2q9-bgk.c(444,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells>, masked, stride is unknown to compiler   [ d2q9-bgk.c(445,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells>, masked, stride is unknown to compiler   [ d2q9-bgk.c(446,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells>, masked, stride is unknown to compiler   [ d2q9-bgk.c(447,28) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells>, masked, stride is unknown to compiler   [ d2q9-bgk.c(448,28) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells>, masked, stride is unknown to compiler   [ d2q9-bgk.c(451,22) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells>, masked, stride is unknown to compiler   [ d2q9-bgk.c(452,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells>, masked, stride is unknown to compiler   [ d2q9-bgk.c(453,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells>, masked, stride is unknown to compiler   [ d2q9-bgk.c(454,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells>, masked, stride is unknown to compiler   [ d2q9-bgk.c(455,28) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells>, masked, stride is unknown to compiler   [ d2q9-bgk.c(456,28) ]
-   remark #15305: vectorization support: vector length 8
-   remark #15309: vectorization support: normalized vectorization overhead 0.032
-   remark #15355: vectorization support: at (459:9) is float type reduction   [ d2q9-bgk.c(459,9) ]
-   remark #15355: vectorization support: at (461:11) is int type reduction   [ d2q9-bgk.c(461,11) ]
-   remark #15301: SIMD LOOP WAS VECTORIZED
-   remark #15452: unmasked strided loads: 1 
-   remark #15460: masked strided loads: 21 
-   remark #15475: --- begin vector cost summary ---
-   remark #15476: scalar cost: 114 
-   remark #15477: vector cost: 372.750 
-   remark #15478: estimated potential speedup: 0.300 
-   remark #15486: divides: 1 
-   remark #15488: --- end vector cost summary ---
+LOOP BEGIN at d2q9-bgk.c(425,3)
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+   remark #15346: vector dependence: assumed OUTPUT dependence between at (459:9) and at (459:9)
+   remark #15346: vector dependence: assumed OUTPUT dependence between at (459:9) and at (459:9)
 
    LOOP BEGIN at d2q9-bgk.c(428,5)
-      remark #25460: No loop optimizations reported
-   LOOP END
-LOOP END
-
-LOOP BEGIN at d2q9-bgk.c(426,3)
-<Remainder loop for vectorization>
-
-   LOOP BEGIN at d2q9-bgk.c(428,5)
-      remark #25460: No loop optimizations reported
+      remark #15344: loop was not vectorized: vector dependence prevents vectorization
+      remark #15346: vector dependence: assumed ANTI dependence between at (459:9) and at (459:9)
+      remark #15346: vector dependence: assumed FLOW dependence between at (459:9) and at (459:9)
+      remark #15346: vector dependence: assumed ANTI dependence between at (459:9) and at (459:9)
    LOOP END
 LOOP END
 ===========================================================================
@@ -537,53 +337,16 @@ Begin optimization report for: calc_reynolds(const t_param, t_speed, int *)
     Report from: Vector optimizations [vec]
 
 
-LOOP BEGIN at d2q9-bgk.c(426,3) inlined into d2q9-bgk.c(716,10)
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <obstacles>, stride is unknown to compiler   [ d2q9-bgk.c(431,12) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s0>, masked, stride is unknown to compiler   [ d2q9-bgk.c(436,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s1>, masked, stride is unknown to compiler   [ d2q9-bgk.c(436,55) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s2>, masked, stride is unknown to compiler   [ d2q9-bgk.c(437,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s3>, masked, stride is unknown to compiler   [ d2q9-bgk.c(437,55) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s4>, masked, stride is unknown to compiler   [ d2q9-bgk.c(438,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s5>, masked, stride is unknown to compiler   [ d2q9-bgk.c(438,55) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s6>, masked, stride is unknown to compiler   [ d2q9-bgk.c(439,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s7>, masked, stride is unknown to compiler   [ d2q9-bgk.c(439,55) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s8>, masked, stride is unknown to compiler   [ d2q9-bgk.c(440,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s1>, masked, stride is unknown to compiler   [ d2q9-bgk.c(443,22) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s5>, masked, stride is unknown to compiler   [ d2q9-bgk.c(444,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s8>, masked, stride is unknown to compiler   [ d2q9-bgk.c(445,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s3>, masked, stride is unknown to compiler   [ d2q9-bgk.c(446,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s6>, masked, stride is unknown to compiler   [ d2q9-bgk.c(447,28) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s7>, masked, stride is unknown to compiler   [ d2q9-bgk.c(448,28) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s2>, masked, stride is unknown to compiler   [ d2q9-bgk.c(451,22) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s5>, masked, stride is unknown to compiler   [ d2q9-bgk.c(452,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s6>, masked, stride is unknown to compiler   [ d2q9-bgk.c(453,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s4>, masked, stride is unknown to compiler   [ d2q9-bgk.c(454,25) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s7>, masked, stride is unknown to compiler   [ d2q9-bgk.c(455,28) ]
-   remark #15328: vectorization support: non-unit strided load was emulated for the variable <cells.s8>, masked, stride is unknown to compiler   [ d2q9-bgk.c(456,28) ]
-   remark #15305: vectorization support: vector length 8
-   remark #15309: vectorization support: normalized vectorization overhead 0.032
-   remark #15355: vectorization support: at (459:9) is float type reduction   [ d2q9-bgk.c(459,9) ]
-   remark #15355: vectorization support: at (461:11) is int type reduction   [ d2q9-bgk.c(461,11) ]
-   remark #15301: SIMD LOOP WAS VECTORIZED
-   remark #15452: unmasked strided loads: 1 
-   remark #15460: masked strided loads: 21 
-   remark #15475: --- begin vector cost summary ---
-   remark #15476: scalar cost: 114 
-   remark #15477: vector cost: 372.750 
-   remark #15478: estimated potential speedup: 0.300 
-   remark #15486: divides: 1 
-   remark #15488: --- end vector cost summary ---
+LOOP BEGIN at d2q9-bgk.c(425,3) inlined into d2q9-bgk.c(716,10)
+   remark #15344: loop was not vectorized: vector dependence prevents vectorization
+   remark #15346: vector dependence: assumed OUTPUT dependence between at (459:9) and at (459:9)
+   remark #15346: vector dependence: assumed OUTPUT dependence between at (459:9) and at (459:9)
 
    LOOP BEGIN at d2q9-bgk.c(428,5) inlined into d2q9-bgk.c(716,10)
-      remark #25460: No loop optimizations reported
-   LOOP END
-LOOP END
-
-LOOP BEGIN at d2q9-bgk.c(426,3) inlined into d2q9-bgk.c(716,10)
-<Remainder loop for vectorization>
-
-   LOOP BEGIN at d2q9-bgk.c(428,5) inlined into d2q9-bgk.c(716,10)
-      remark #25460: No loop optimizations reported
+      remark #15344: loop was not vectorized: vector dependence prevents vectorization
+      remark #15346: vector dependence: assumed ANTI dependence between at (459:9) and at (459:9)
+      remark #15346: vector dependence: assumed FLOW dependence between at (459:9) and at (459:9)
+      remark #15346: vector dependence: assumed ANTI dependence between at (459:9) and at (459:9)
    LOOP END
 LOOP END
 ===========================================================================
