@@ -448,7 +448,7 @@ float grid_ops(const t_param params, const float* restrict cells_s0, const float
                                         + params.omega * (d_equ6 - speed6) : speed8;
       tmp_cells_s8[ii + jj*params.nx] = !obstacles[ii + jj*params.nx] ? speed8
                                         + params.omega * (d_equ8 - speed8) : speed6;
-      tot_u += !obstacles[ii + jj*params.nx] ? 0.00f : sqrt(u_sq);
+      tot_u += !obstacles[ii + jj*params.nx] ? sqrt(u_sq) : 0.00f;
     }
   }
   /*t_speed temp = *cells_ptr;
