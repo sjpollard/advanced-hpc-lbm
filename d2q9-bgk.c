@@ -307,7 +307,8 @@ float grid_ops(const t_param params, const float* restrict cells_s0, const float
   const float d2 = 0.5 * 3.f;
 
   float local_density_i;
-  float tot_u;
+  float tot_u = 0.00f;
+  int tot_cells = 0;
   //t_speed cells = *cells_ptr;
   //t_speed tmp_cells = *tmp_cells_ptr;
   __assume_aligned(obstacles, 64);
@@ -337,7 +338,7 @@ float grid_ops(const t_param params, const float* restrict cells_s0, const float
   __assume((params.nx * params.ny) % 4 == 0);
   __assume((params.nx * params.ny) % 8 == 0);
   __assume((params.nx * params.ny) % 16 == 0);
-  #pragma omp parallel for reduction(+:tot_u) //collapse(2)
+  #pragma omp parallel for reduction(+:tot_u, tot_cells) //collapse(2)
   for (int jj = 0; jj < params.ny; jj++)
   { 
     #pragma omp simd
@@ -448,13 +449,15 @@ float grid_ops(const t_param params, const float* restrict cells_s0, const float
                                         + params.omega * (d_equ6 - speed6) : speed8;
       tmp_cells_s8[ii + jj*params.nx] = !obstacles[ii + jj*params.nx] ? speed8
                                         + params.omega * (d_equ8 - speed8) : speed6;
-      tot_u += !obstacles[ii + jj*params.nx] ? sqrt(u_sq) : 0.00f;
+      tot_cells += !obstacles[ii + jj*params.nx] ? 1 : 0;
+      tot_u += !obstacles[ii + jj*params.nx] ? sqrtf(u_sq) : 0.00f;
+      /*if (!obstacles[ii + jj*params.nx]) {
+        tot_u += sqrtf(u_sq);
+        tot_cells++;
+      }*/
     }
   }
-  /*t_speed temp = *cells_ptr;
-  *cells_ptr = *tmp_cells_ptr;
-  *tmp_cells_ptr = temp;*/
-  return tot_u / (float)(params.nx * params.ny);
+  return tot_u / (float)(tot_cells);
 }
 
 float av_velocity(const t_param params, float* restrict cells_s0, float* restrict cells_s1, float* restrict cells_s2, 
@@ -665,6 +668,26 @@ int initialise(const char* paramfile, const char* obstaclefile,
       (*cells_ptr).s6[ii + jj*params->nx] = w2;
       (*cells_ptr).s7[ii + jj*params->nx] = w2;
       (*cells_ptr).s8[ii + jj*params->nx] = w2;
+    }
+  }
+
+  #pragma omp parallel for
+  for (int jj = 0; jj < params->ny; jj++)
+  {
+    for (int ii = 0; ii < params->nx; ii++)
+    {
+      /* centre */
+      (*tmp_cells_ptr).s0[ii + jj*params->nx] = 0.00f;
+      /* axis directions */
+      (*tmp_cells_ptr).s1[ii + jj*params->nx] = 0.00f;
+      (*tmp_cells_ptr).s2[ii + jj*params->nx] = 0.00f;
+      (*tmp_cells_ptr).s3[ii + jj*params->nx] = 0.00f;
+      (*tmp_cells_ptr).s4[ii + jj*params->nx] = 0.00f;
+      /* diagonals */
+      (*tmp_cells_ptr).s5[ii + jj*params->nx] = 0.00f;
+      (*tmp_cells_ptr).s6[ii + jj*params->nx] = 0.00f;
+      (*tmp_cells_ptr).s7[ii + jj*params->nx] = 0.00f;
+      (*tmp_cells_ptr).s8[ii + jj*params->nx] = 0.00f;
     }
   }
 
