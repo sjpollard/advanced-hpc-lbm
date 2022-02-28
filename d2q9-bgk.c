@@ -266,7 +266,6 @@ int accelerate_flow(const t_param params, float* restrict cells_s0, float* restr
   __assume((params.nx) % 4 == 0);
   __assume((params.nx) % 8 == 0);
   __assume((params.nx) % 16 == 0);
-  #pragma omp parallel for simd
   for (int ii = 0; ii < params.nx; ii++)
   {
     /* if the cell is not occupied and
@@ -334,10 +333,6 @@ float grid_ops(const t_param params, const float* restrict cells_s0, const float
   __assume((params.nx) % 4 == 0);
   __assume((params.nx) % 8 == 0);
   __assume((params.nx) % 16 == 0);
-  __assume((params.nx * params.ny) % 2 == 0);
-  __assume((params.nx * params.ny) % 4 == 0);
-  __assume((params.nx * params.ny) % 8 == 0);
-  __assume((params.nx * params.ny) % 16 == 0);
   #pragma omp parallel for reduction(+:tot_u, tot_cells) //collapse(2)
   for (int jj = 0; jj < params.ny; jj++)
   { 
@@ -429,32 +424,24 @@ float grid_ops(const t_param params, const float* restrict cells_s0, const float
 
       tmp_cells_s0[ii + jj*params.nx] = !obstacles[ii + jj*params.nx] ? speed0
                                         + params.omega * (d_equ0 - speed0) : speed0;
-      //float temp = speed1;d2
       tmp_cells_s1[ii + jj*params.nx] = !obstacles[ii + jj*params.nx] ? speed1
                                         + params.omega * (d_equ1 - speed1) : speed3;
       tmp_cells_s3[ii + jj*params.nx] = !obstacles[ii + jj*params.nx] ? speed3
                                         + params.omega * (d_equ3 - speed3) : speed1;
-      //temp = speed2;
       tmp_cells_s2[ii + jj*params.nx] = !obstacles[ii + jj*params.nx] ? speed2
                                         + params.omega * (d_equ2 - speed2) : speed4;                                                                    
       tmp_cells_s4[ii + jj*params.nx] = !obstacles[ii + jj*params.nx] ? speed4
                                         + params.omega * (d_equ4 - speed4) : speed2;
-      //temp = speed5;
       tmp_cells_s5[ii + jj*params.nx] = !obstacles[ii + jj*params.nx] ? speed5
                                         + params.omega * (d_equ5 - speed5) : speed7;
       tmp_cells_s7[ii + jj*params.nx] = !obstacles[ii + jj*params.nx] ? speed7
                                         + params.omega * (d_equ7 - speed7) : speed5;
-      //temp = speed6;
       tmp_cells_s6[ii + jj*params.nx] = !obstacles[ii + jj*params.nx] ? speed6
                                         + params.omega * (d_equ6 - speed6) : speed8;
       tmp_cells_s8[ii + jj*params.nx] = !obstacles[ii + jj*params.nx] ? speed8
                                         + params.omega * (d_equ8 - speed8) : speed6;
       tot_cells += !obstacles[ii + jj*params.nx] ? 1 : 0;
       tot_u += !obstacles[ii + jj*params.nx] ? sqrtf(u_sq) : 0.00f;
-      /*if (!obstacles[ii + jj*params.nx]) {
-        tot_u += sqrtf(u_sq);
-        tot_cells++;
-      }*/
     }
   }
   return tot_u / (float)(tot_cells);

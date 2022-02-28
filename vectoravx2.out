@@ -1,0 +1,18 @@
+Running on host compute109.bc4.acrc.priv
+Time is Mon Feb 28 20:54:36 GMT 2022
+Directory is /user/home/kh19026/assignment1/advanced-hpc-lbm
+Slurm job ID is 10076419
+This job runs on the following machines:
+compute109
+==done==
+Reynolds number:		9.756052970886E+00
+Elapsed Init time:			0.026506 (s)
+Elapsed Compute time:			5.936171 (s)
+Elapsed Collate time:			0.000000 (s)
+Elapsed Total time:			5.962677 (s)
+==done==
+Reynolds number:		1.006098079681E+01
+Elapsed Init time:			0.027966 (s)
+Elapsed Compute time:			41.802720 (s)
+Elapsed Collate time:			0.000000 (s)
+Elapsed Total time:			41.830686 (s)

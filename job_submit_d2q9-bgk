@@ -3,11 +3,11 @@
 #SBATCH --job-name d2q9-bgk
 #SBATCH --nodes 1
 #SBATCH --ntasks-per-node 28
-#SBATCH --time 00:10:00
+#SBATCH --time 00:30:00
 #SBATCH --partition veryshort
 #SBATCH --reservation=COSC026662
 #SBATCH --account=COSC026662
-#SBATCH --output d2q9-bgk.out
+#SBATCH --output vectoravx.out
 
 echo Running on host `hostname`
 echo Time is `date`
@@ -17,12 +17,16 @@ echo This job runs on the following machines:
 echo `echo $SLURM_JOB_NODELIST | uniq`
 
 #export KMP_AFFINITY=verbose
-export OMP_NUM_THREADS=28
+export OMP_NUM_THREADS=1
 export OMP_PLACES=cores
 export OMP_PROC_BIND=close
 #! Run the executable
-#advixe-cl --collect=survey -- ./d2q9-bgk input_128x128.params obstacles_128x128.dat
-#./d2q9-bgk input_128x128.params obstacles_128x128.dat
-#./d2q9-bgk input_128x256.params obstacles_128x256.dat
-#./d2q9-bgk input_256x256.params obstacles_256x256.dat
+./d2q9-bgk input_128x128.params obstacles_128x128.dat
+./d2q9-bgk input_256x256.params obstacles_256x256.dat
+./d2q9-bgk input_1024x1024.params obstacles_1024x1024.dat
+./d2q9-bgk input_128x128.params obstacles_128x128.dat
+./d2q9-bgk input_256x256.params obstacles_256x256.dat
+./d2q9-bgk input_1024x1024.params obstacles_1024x1024.dat
+./d2q9-bgk input_128x128.params obstacles_128x128.dat
+./d2q9-bgk input_256x256.params obstacles_256x256.dat
 ./d2q9-bgk input_1024x1024.params obstacles_1024x1024.dat
