@@ -44,13 +44,13 @@ def plotparallelismspread():
     plt.show()
 
 def plotvectorbar():
-    avx2times = np.array([5.986971, 41.834681, 213.666506])
-    plt.bar(avx2times)
+    plt.bar(np.array(["128", "256", "1024"]), np.array([22.2, 176.5, 730.6]), 0.5, color="r")
+    plt.bar(np.array(["128", "256", "1024"]), np.array([5.986971, 41.834681, 213.666506]), 0.5, color="g")
     plt.show()
 
 def main():
-    plotparallelismclose()
-    plotparallelismspread()
+    #plotparallelismclose()
+    #plotparallelismspread()
     plotvectorbar()
 
 if __name__ == "__main__":
