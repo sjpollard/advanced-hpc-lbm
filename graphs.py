@@ -1,3 +1,4 @@
+from cProfile import label
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -44,8 +45,18 @@ def plotparallelismspread():
     plt.show()
 
 def plotvectorbar():
-    plt.bar(np.array(["128", "256", "1024"]), np.array([22.2, 176.5, 730.6]), 0.5, color="r")
-    plt.bar(np.array(["128", "256", "1024"]), np.array([5.986971, 41.834681, 213.666506]), 0.5, color="g")
+    op = np.array([22.2/20.117178, 176.5/161.120031, 730.6/673.476107])
+    vec = np.array([22.2/5.986971, 176.5/41.834681, 730.6/213.666506])
+    ind = np.arange(3)
+    width = 0.3
+    plt.title("Vectorisation Speedup")
+    plt.bar(ind, op, width, color="b", label="Serial")
+    plt.bar(ind + width, vec, width, color="g", label="Vectorised")
+    plt.xticks(ind + width/2, ("128", "256", "1024"))
+    plt.ylim([1, 5])
+    plt.legend(loc="upper left")
+    plt.xlabel("Grid size")
+    plt.ylabel("Speedup")
     plt.show()
 
 def main():
