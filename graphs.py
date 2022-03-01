@@ -8,9 +8,15 @@ def plotparallelismclose():
     speedup_256 = times_256[0] / times_256
     times_1024 = np.array([215.781905,110.889146,78.214594,63.683998,52.827868,46.364502,41.726622,38.466800,36.931516,34.870272,35.086086,32.481311,37.471123,32.367802,28.209405,28.241629,30.512105,27.970327,21.232261,22.630575,19.267374,20.097921,17.116734,18.818783,12.443711,14.275730,15.091132,14.875479])
     speedup_1024 = times_1024[0] / times_1024
-    plt.plot(np.arange(1, 29), speedup_128, c="b", marker="x", label="128")
-    plt.plot(np.arange(1, 29), speedup_256, c="r", marker="x", label="256" )
-    plt.plot(np.arange(1, 29), speedup_1024, c="g", marker="x", label="1024" )
+    plt.title("OMP_PROC_BIND = close")
+    plt.xticks(np.arange(2, 29, 2))
+    plt.yticks(np.arange(0, 20, 2))
+    plt.plot(np.arange(0, 29, 1), c="grey", linestyle="--")
+    plt.plot(np.arange(1, 29), np.round(speedup_128, 1), c="b", marker=".", label="128")
+    plt.plot(np.arange(1, 29), np.round(speedup_256, 1), c="r", marker=".", label="256" )
+    plt.plot(np.arange(1, 29), np.round(speedup_1024, 1), c="g", marker=".", label="1024" )
+    plt.xlim([0, 29])
+    plt.ylim([0, 18])
     plt.legend(loc="upper left")
     plt.xlabel("Number of cores")
     plt.ylabel("Speedup")
@@ -23,13 +29,23 @@ def plotparallelismspread():
     speedup_256 = times_256[0] / times_256
     times_1024 = np.array([215.899309,103.643975,74.969557,54.502181,48.344722,40.598941,34.625975,28.549383,28.190485,25.698105,23.469947,21.119348,20.428659,18.075947,17.936696,16.095167,17.723030,15.421552,17.348139,15.378277,13.315262,12.432627,12.858203,13.436907,14.445647,14.056382,13.134030,13.169946])
     speedup_1024 = times_1024[0] / times_1024
-    plt.plot(np.arange(1, 29), speedup_128, c="b", marker="x", label="128")
-    plt.plot(np.arange(1, 29), speedup_256, c="r", marker="x", label="256" )
-    plt.plot(np.arange(1, 29), speedup_1024, c="g", marker="x", label="1024" )
+    plt.title("OMP_PROC_BIND = spread")
+    plt.xticks(np.arange(2, 29, 2))
+    plt.yticks(np.arange(0, 20, 2))
+    plt.plot(np.arange(0, 29, 1), c="grey", linestyle="--")
+    plt.plot(np.arange(1, 29), np.round(speedup_128, 1), c="b", marker=".", label="128")
+    plt.plot(np.arange(1, 29), np.round(speedup_256, 1), c="r", marker=".", label="256" )
+    plt.plot(np.arange(1, 29), np.round(speedup_1024, 1), c="g", marker=".", label="1024" )
+    plt.xlim([0, 29])
+    plt.ylim([0, 18])
     plt.legend(loc="upper left")
     plt.xlabel("Number of cores")
     plt.ylabel("Speedup")
     plt.show()
+
+def plotvectorbar():
+    avxtimes = np.array([6.074682, 44.517368, 217.692487])
+    avx2times = np.array([5.962677, ])
 
 def main():
     plotparallelismclose()
