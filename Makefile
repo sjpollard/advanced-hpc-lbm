@@ -3,7 +3,7 @@
 EXE=d2q9-bgk
 
 CC=icc
-CFLAGS= -std=c99 -Ofast -mtune=broadwell -xAVX2 -qopenmp -par-affinity=compact
+CFLAGS= -std=c99 -Ofast -mtune=broadwell -xAVX2 -qopenmp
 LIBS = -lm
 
 FINAL_STATE_FILE=./final_state.dat

@@ -166,7 +166,6 @@ int main(int argc, char* argv[])
     paramfile = argv[1];
     obstaclefile = argv[2];
   }
-  omp_set_num_threads(28);
   /* Total/init time starts here: initialise our data structures and load values from file */
   gettimeofday(&timstr, NULL);
   tot_tic = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
