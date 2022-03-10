@@ -1,9 +1,0 @@
-{
-    "files.associations": {
-        "malloc.h": "c",
-        "vector": "c",
-        "time.h": "c",
-        "*.tcc": "c",
-        "fstream": "c"
-    }
-}

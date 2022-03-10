@@ -56,6 +56,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <malloc.h>
+#include <mpi.h>
 
 #define NSPEEDS         9
 #define FINALSTATEFILE  "final_state.dat"
@@ -155,6 +156,15 @@ int main(int argc, char* argv[])
   struct timeval timstr;                                                             /* structure to hold elapsed time */
   double tot_tic, tot_toc, init_tic, init_toc, comp_tic, comp_toc, col_tic, col_toc; /* floating point numbers to calculate elapsed wallclock time */
 
+  int rank;
+  int size;
+
+  MPI_Init(&argc, &argv);
+
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
   /* parse the command line */
   if (argc != 3)
   {
@@ -211,6 +221,7 @@ int main(int argc, char* argv[])
   tot_toc = col_toc;
   
   /* write final values and free memory */
+  printf("Process %d of %d", rank, size);
   printf("==done==\n");
   printf("Reynolds number:\t\t%.12E\n", calc_reynolds(params, cells, obstacles));
   printf("Elapsed Init time:\t\t\t%.6lf (s)\n",    init_toc - init_tic);
@@ -219,6 +230,8 @@ int main(int argc, char* argv[])
   printf("Elapsed Total time:\t\t\t%.6lf (s)\n",   tot_toc  - tot_tic);
   write_values(params, cells, obstacles, av_vels);
   finalise(&params, &cells, &tmp_cells, &obstacles, &av_vels);
+
+  MPI_Finalize();
 
   return EXIT_SUCCESS;
 }
@@ -294,7 +307,6 @@ float grid_ops(const t_param params, const float* restrict cells_s0, const float
                                    float* restrict tmp_cells_s3, float* restrict tmp_cells_s4, float* restrict tmp_cells_s5, 
                                    float* restrict tmp_cells_s6, float* restrict tmp_cells_s7, float* restrict tmp_cells_s8, int* restrict obstacles)
 { 
-  //const float c_sq = 1.f / 3.f; /* square of speed of sound */
   const float w0 = 4.f / 9.f;  /* weighting factor */
   const float w1 = 1.f / 9.f;  /* weighting factor */
   const float w2 = 1.f / 36.f; /* weighting factor */
@@ -306,8 +318,7 @@ float grid_ops(const t_param params, const float* restrict cells_s0, const float
   float local_density_i;
   float tot_u = 0.00f;
   int tot_cells = 0;
-  //t_speed cells = *cells_ptr;
-  //t_speed tmp_cells = *tmp_cells_ptr;
+
   __assume_aligned(obstacles, 64);
   __assume_aligned(cells_s0, 64);
   __assume_aligned(cells_s1, 64);
@@ -333,7 +344,6 @@ float grid_ops(const t_param params, const float* restrict cells_s0, const float
   __assume((params.nx) % 16 == 0);
   for (int jj = 0; jj < params.ny; jj++)
   { 
-    #pragma omp simd
     for (int ii = 0; ii < params.nx; ii++)
     {
       const int y_n = (jj + 1) % params.ny;
@@ -354,7 +364,6 @@ float grid_ops(const t_param params, const float* restrict cells_s0, const float
       const float speed8 = cells_s8[x_w + y_n*params.nx]; /* south-east */
 
       const float local_density = speed0 + speed1 + speed2+ speed3 + speed4 + speed5 + speed6 + speed7 + speed8;
-      //}
       local_density_i = 1 / local_density;
       /* compute x velocity component */
       const float u_x = (speed1
@@ -388,7 +397,6 @@ float grid_ops(const t_param params, const float* restrict cells_s0, const float
       u[8] =   u_x - u_y;  /* south-east */
 
       /* equilibrium densities */
-      //float d_equ[NSPEEDS];
       /* zero velocity density: weight w0 */
       const float d_equ0 = w0 * local_density
                  * (1.f - u_sq * d2);
@@ -470,7 +478,6 @@ float av_velocity(const t_param params, float* restrict cells_s0, float* restric
   /* loop over all non-blocked cells */
   for (int jj = 0; jj < params.ny; jj++)
   { 
-    //#pragma omp simd
     for (int ii = 0; ii < params.nx; ii++)
     {
       /* ignore occupied cells */
