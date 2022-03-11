@@ -146,6 +146,15 @@ void usage(const char* exe);
 */
 int main(int argc, char* argv[])
 {
+  MPI_Init(&argc, &argv);
+
+  int size;
+  int rank;
+
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
   char*    paramfile = NULL;    /* name of the input parameter file */
   char*    obstaclefile = NULL; /* name of a the input obstacle file */
   t_param  params;              /* struct to hold parameter values */
@@ -156,14 +165,6 @@ int main(int argc, char* argv[])
   struct timeval timstr;                                                             /* structure to hold elapsed time */
   double tot_tic, tot_toc, init_tic, init_toc, comp_tic, comp_toc, col_tic, col_toc; /* floating point numbers to calculate elapsed wallclock time */
 
-  int rank;
-  int size;
-
-  MPI_Init(&argc, &argv);
-
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   /* parse the command line */
   if (argc != 3)
@@ -197,9 +198,6 @@ int main(int argc, char* argv[])
     t_speed temp = cells;
     cells = tmp_cells;
     tmp_cells = temp;
-    /*av_vels[tt] = av_velocity(params, cells.s0, cells.s1, cells.s2, 
-                     cells.s3, cells.s4, cells.s5, 
-                     cells.s6, cells.s7, cells.s8, obstacles);*/
 
 #ifdef DEBUG
     printf("==timestep: %d==\n", tt);
@@ -221,7 +219,7 @@ int main(int argc, char* argv[])
   tot_toc = col_toc;
   
   /* write final values and free memory */
-  printf("Process %d of %d", rank, size);
+  printf("Process %d of %d\n", rank, size);
   printf("==done==\n");
   printf("Reynolds number:\t\t%.12E\n", calc_reynolds(params, cells, obstacles));
   printf("Elapsed Init time:\t\t\t%.6lf (s)\n",    init_toc - init_tic);
