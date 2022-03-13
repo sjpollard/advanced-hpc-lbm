@@ -96,7 +96,7 @@ typedef struct
 /* load params, allocate memory, load obstacles & initialise fluid particle densities */
 int initialise(const char* paramfile, const char* obstaclefile,
                t_param* params, t_speed* cells_ptr, t_speed* tmp_cells_ptr,
-               int** obstacles_ptr, float** av_vels_ptr);
+               int** obstacles_ptr, float** av_vels_ptr, int size);
 
 /*
 ** The main calculation methods.
@@ -165,7 +165,6 @@ int main(int argc, char* argv[])
   struct timeval timstr;                                                             /* structure to hold elapsed time */
   double tot_tic, tot_toc, init_tic, init_toc, comp_tic, comp_toc, col_tic, col_toc; /* floating point numbers to calculate elapsed wallclock time */
 
-
   /* parse the command line */
   if (argc != 3)
   {
@@ -180,7 +179,10 @@ int main(int argc, char* argv[])
   gettimeofday(&timstr, NULL);
   tot_tic = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
   init_tic=tot_tic;
-  initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &obstacles, &av_vels);
+  int num_cells = initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &obstacles, &av_vels, size);
+
+  int begin = rank * num_cells;
+  int end = begin + num_cells;
 
   /* Init time stops here, compute time starts*/
   gettimeofday(&timstr, NULL);
@@ -220,6 +222,7 @@ int main(int argc, char* argv[])
   
   /* write final values and free memory */
   printf("Process %d of %d\n", rank, size);
+  printf("Starting at %d. Ending at %d.", begin, end);
   printf("==done==\n");
   printf("Reynolds number:\t\t%.12E\n", calc_reynolds(params, cells, obstacles));
   printf("Elapsed Init time:\t\t\t%.6lf (s)\n",    init_toc - init_tic);
@@ -519,7 +522,7 @@ float av_velocity(const t_param params, float* restrict cells_s0, float* restric
 
 int initialise(const char* paramfile, const char* obstaclefile,
                t_param* params, t_speed* cells_ptr, t_speed* tmp_cells_ptr,
-               int** obstacles_ptr, float** av_vels_ptr)
+               int** obstacles_ptr, float** av_vels_ptr, int size)
 {
   char   message[1024];  /* message buffer */
   FILE*   fp;            /* file pointer */
@@ -587,16 +590,21 @@ int initialise(const char* paramfile, const char* obstaclefile,
   ** a 1D array of these structs.
   */
 
+  int num_cells = (params->nx * params->ny)/size;
+  int rem = (params->nx * params->ny)%size;
+
+  
+
   /* main grid */
-  (*cells_ptr).s0 = (float*)_mm_malloc(sizeof(float) * (params->ny * params->nx), 64);
-  (*cells_ptr).s1 = (float*)_mm_malloc(sizeof(float) * (params->ny * params->nx), 64);
-  (*cells_ptr).s2 = (float*)_mm_malloc(sizeof(float) * (params->ny * params->nx), 64);
-  (*cells_ptr).s3 = (float*)_mm_malloc(sizeof(float) * (params->ny * params->nx), 64);
-  (*cells_ptr).s4 = (float*)_mm_malloc(sizeof(float) * (params->ny * params->nx), 64);
-  (*cells_ptr).s5 = (float*)_mm_malloc(sizeof(float) * (params->ny * params->nx), 64);
-  (*cells_ptr).s6 = (float*)_mm_malloc(sizeof(float) * (params->ny * params->nx), 64);
-  (*cells_ptr).s7 = (float*)_mm_malloc(sizeof(float) * (params->ny * params->nx), 64);
-  (*cells_ptr).s8 = (float*)_mm_malloc(sizeof(float) * (params->ny * params->nx), 64);
+  (*cells_ptr).s0 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
+  (*cells_ptr).s1 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
+  (*cells_ptr).s2 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
+  (*cells_ptr).s3 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
+  (*cells_ptr).s4 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
+  (*cells_ptr).s5 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
+  (*cells_ptr).s6 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
+  (*cells_ptr).s7 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
+  (*cells_ptr).s8 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
 
   if ((*cells_ptr).s0 == NULL) die("cannot allocate memory for cells", __LINE__, __FILE__);
   if ((*cells_ptr).s1 == NULL) die("cannot allocate memory for cells", __LINE__, __FILE__);
@@ -609,15 +617,15 @@ int initialise(const char* paramfile, const char* obstaclefile,
   if ((*cells_ptr).s8 == NULL) die("cannot allocate memory for cells", __LINE__, __FILE__);
 
   /* 'helper' grid, used as scratch space */
-  (*tmp_cells_ptr).s0 = (float*)_mm_malloc(sizeof(float) * (params->ny * params->nx), 64);
-  (*tmp_cells_ptr).s1 = (float*)_mm_malloc(sizeof(float) * (params->ny * params->nx), 64);
-  (*tmp_cells_ptr).s2 = (float*)_mm_malloc(sizeof(float) * (params->ny * params->nx), 64);
-  (*tmp_cells_ptr).s3 = (float*)_mm_malloc(sizeof(float) * (params->ny * params->nx), 64);
-  (*tmp_cells_ptr).s4 = (float*)_mm_malloc(sizeof(float) * (params->ny * params->nx), 64);
-  (*tmp_cells_ptr).s5 = (float*)_mm_malloc(sizeof(float) * (params->ny * params->nx), 64);
-  (*tmp_cells_ptr).s6 = (float*)_mm_malloc(sizeof(float) * (params->ny * params->nx), 64);
-  (*tmp_cells_ptr).s7 = (float*)_mm_malloc(sizeof(float) * (params->ny * params->nx), 64);
-  (*tmp_cells_ptr).s8 = (float*)_mm_malloc(sizeof(float) * (params->ny * params->nx), 64);
+  (*tmp_cells_ptr).s0 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
+  (*tmp_cells_ptr).s1 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
+  (*tmp_cells_ptr).s2 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
+  (*tmp_cells_ptr).s3 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
+  (*tmp_cells_ptr).s4 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
+  (*tmp_cells_ptr).s5 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
+  (*tmp_cells_ptr).s6 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
+  (*tmp_cells_ptr).s7 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
+  (*tmp_cells_ptr).s8 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
 
   if ((*tmp_cells_ptr).s0 == NULL) die("cannot allocate memory for tmp_cells", __LINE__, __FILE__);
   if ((*tmp_cells_ptr).s1 == NULL) die("cannot allocate memory for tmp_cells", __LINE__, __FILE__);
@@ -630,7 +638,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
   if ((*tmp_cells_ptr).s8 == NULL) die("cannot allocate memory for tmp_cells", __LINE__, __FILE__);
 
   /* the map of obstacles */
-  *obstacles_ptr = malloc(sizeof(int) * (params->ny * params->nx));
+  *obstacles_ptr = malloc(sizeof(int) * (num_cells));
 
   if (*obstacles_ptr == NULL) die("cannot allocate column memory for obstacles", __LINE__, __FILE__);
 
@@ -720,7 +728,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
   */
   *av_vels_ptr = (float*)malloc(sizeof(float) * params->maxIters);
 
-  return EXIT_SUCCESS;
+  return num_cells;
 }
 
 int finalise(const t_param* params, t_speed* cells_ptr, t_speed* tmp_cells_ptr,
