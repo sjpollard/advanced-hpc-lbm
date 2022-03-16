@@ -96,7 +96,7 @@ typedef struct
 /* load params, allocate memory, load obstacles & initialise fluid particle densities */
 int initialise(const char* paramfile, const char* obstaclefile,
                t_param* params, t_speed* cells_ptr, t_speed* tmp_cells_ptr,
-               int** obstacles_ptr, float** av_vels_ptr, int size);
+               int** obstacles_ptr, float** av_vels_ptr, int rank, int size, int* out);
 
 /*
 ** The main calculation methods.
@@ -108,16 +108,19 @@ float timestep(const t_param params, float* restrict cells_s0, float* restrict c
                                    float* restrict cells_s6, float* restrict cells_s7, float* restrict cells_s8, 
                                    float* restrict tmp_cells_s0, float* restrict tmp_cells_s1, float* restrict tmp_cells_s2, 
                                    float* restrict tmp_cells_s3, float* restrict tmp_cells_s4, float* restrict tmp_cells_s5, 
-                                   float* restrict tmp_cells_s6, float* restrict tmp_cells_s7, float* restrict tmp_cells_s8, int* obstacles);
+                                   float* restrict tmp_cells_s6, float* restrict tmp_cells_s7, float* restrict tmp_cells_s8, int* obstacles, 
+                                   int rank, int size, int start_row, int end_row);
 int accelerate_flow(const t_param params, float* restrict cells_s0, float* restrict cells_s1, float* restrict cells_s2, 
                                    float* restrict cells_s3, float* restrict cells_s4, float* restrict cells_s5, 
-                                   float* restrict cells_s6, float* restrict cells_s7, float* restrict cells_s8, int* restrict obstacles);
+                                   float* restrict cells_s6, float* restrict cells_s7, float* restrict cells_s8, int* restrict obstacles,
+                                   int start_row);
 float grid_ops(const t_param params, const float* restrict cells_s0, const float* restrict cells_s1, const float* restrict cells_s2, 
                                    const float* restrict cells_s3, const float* restrict cells_s4, const float* restrict cells_s5, 
                                    const float* restrict cells_s6, const float* restrict cells_s7, const float* restrict cells_s8, 
                                    float* restrict tmp_cells_s0, float* restrict tmp_cells_s1, float* restrict tmp_cells_s2, 
                                    float* restrict tmp_cells_s3, float* restrict tmp_cells_s4, float* restrict tmp_cells_s5, 
-                                   float* restrict tmp_cells_s6, float* restrict tmp_cells_s7, float* restrict tmp_cells_s8, int* restrict obstacles);
+                                   float* restrict tmp_cells_s6, float* restrict tmp_cells_s7, float* restrict tmp_cells_s8, int* restrict obstacles,
+                                   int start_row, int end_row);
 int write_values(const t_param params, t_speed cells, int* obstacles, float* av_vels);
 
 /* finalise, including freeing up allocated memory */
@@ -148,12 +151,13 @@ int main(int argc, char* argv[])
 {
   MPI_Init(&argc, &argv);
 
-  int size;
   int rank;
+  int size;
+
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   char*    paramfile = NULL;    /* name of the input parameter file */
   char*    obstaclefile = NULL; /* name of a the input obstacle file */
@@ -179,10 +183,9 @@ int main(int argc, char* argv[])
   gettimeofday(&timstr, NULL);
   tot_tic = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
   init_tic=tot_tic;
-  int num_cells = initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &obstacles, &av_vels, size);
 
-  int begin = rank * num_cells;
-  int end = begin + num_cells;
+  int local_work[3];
+  initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &obstacles, &av_vels, rank, size, local_work);
 
   /* Init time stops here, compute time starts*/
   gettimeofday(&timstr, NULL);
@@ -196,7 +199,8 @@ int main(int argc, char* argv[])
                      cells.s6, cells.s7, cells.s8, 
                      tmp_cells.s0, tmp_cells.s1, tmp_cells.s2, 
                      tmp_cells.s3, tmp_cells.s4, tmp_cells.s5, 
-                     tmp_cells.s6, tmp_cells.s7, tmp_cells.s8, obstacles);
+                     tmp_cells.s6, tmp_cells.s7, tmp_cells.s8, obstacles,
+                     rank, size, local_work[1], local_work[2]);
     t_speed temp = cells;
     cells = tmp_cells;
     tmp_cells = temp;
@@ -222,16 +226,15 @@ int main(int argc, char* argv[])
   
   /* write final values and free memory */
   printf("Process %d of %d\n", rank, size);
-  printf("Starting at %d. Ending at %d.", begin, end);
+  printf("Work = %d. Starting = %d. Ending = %d.\n", local_work[0], local_work[1], local_work[2]);
   printf("==done==\n");
-  printf("Reynolds number:\t\t%.12E\n", calc_reynolds(params, cells, obstacles));
+  //printf("Reynolds number:\t\t%.12E\n", calc_reynolds(params, cells, obstacles));
   printf("Elapsed Init time:\t\t\t%.6lf (s)\n",    init_toc - init_tic);
   printf("Elapsed Compute time:\t\t\t%.6lf (s)\n", comp_toc - comp_tic);
   printf("Elapsed Collate time:\t\t\t%.6lf (s)\n", col_toc  - col_tic);
   printf("Elapsed Total time:\t\t\t%.6lf (s)\n",   tot_toc  - tot_tic);
   write_values(params, cells, obstacles, av_vels);
   finalise(&params, &cells, &tmp_cells, &obstacles, &av_vels);
-
   MPI_Finalize();
 
   return EXIT_SUCCESS;
@@ -242,28 +245,33 @@ float timestep(const t_param params, float* restrict cells_s0, float* restrict c
                                    float* restrict cells_s6, float* restrict cells_s7, float* restrict cells_s8, 
                                    float* restrict tmp_cells_s0, float* restrict tmp_cells_s1, float* restrict tmp_cells_s2, 
                                    float* restrict tmp_cells_s3, float* restrict tmp_cells_s4, float* restrict tmp_cells_s5, 
-                                   float* restrict tmp_cells_s6, float* restrict tmp_cells_s7, float* restrict tmp_cells_s8, int* obstacles)
+                                   float* restrict tmp_cells_s6, float* restrict tmp_cells_s7, float* restrict tmp_cells_s8, int* obstacles, 
+                                   int rank, int size, int start_row, int end_row)
 {
-  accelerate_flow(params, cells_s0, cells_s1, cells_s2, 
-                     cells_s3, cells_s4, cells_s5, 
-                     cells_s6, cells_s7, cells_s8, obstacles);
+  if (start_row <= params.ny - 2 || end_row <= params.ny - 2) {
+    
+    accelerate_flow(params, cells_s0, cells_s1, cells_s2, 
+                      cells_s3, cells_s4, cells_s5, 
+                      cells_s6, cells_s7, cells_s8, obstacles, start_row);
+  }
   return grid_ops(params, cells_s0, cells_s1, cells_s2, 
                      cells_s3, cells_s4, cells_s5, 
                      cells_s6, cells_s7, cells_s8, tmp_cells_s0, tmp_cells_s1, tmp_cells_s2, 
                      tmp_cells_s3, tmp_cells_s4, tmp_cells_s5, 
-                     tmp_cells_s6, tmp_cells_s7, tmp_cells_s8, obstacles);
+                     tmp_cells_s6, tmp_cells_s7, tmp_cells_s8, obstacles, start_row, end_row);
 }
 
 int accelerate_flow(const t_param params, float* restrict cells_s0, float* restrict cells_s1, float* restrict cells_s2, 
                                    float* restrict cells_s3, float* restrict cells_s4, float* restrict cells_s5, 
-                                   float* restrict cells_s6, float* restrict cells_s7, float* restrict cells_s8, int* restrict obstacles)
+                                   float* restrict cells_s6, float* restrict cells_s7, float* restrict cells_s8, int* restrict obstacles,
+                                   int start_row)
 {
   /* compute weighting factors */
   const float w1 = params.density * params.accel / 9.f;
   const float w2 = params.density * params.accel / 36.f;
 
   /* modify the 2nd row of the grid */
-  int jj = params.ny - 2;
+  int jj = params.ny - start_row - 3;
   __assume_aligned(obstacles, 64);
   __assume_aligned(cells_s0, 64);
   __assume_aligned(cells_s1, 64);
@@ -306,7 +314,8 @@ float grid_ops(const t_param params, const float* restrict cells_s0, const float
                                    const float* restrict cells_s6, const float* restrict cells_s7, const float* restrict cells_s8, 
                                    float* restrict tmp_cells_s0, float* restrict tmp_cells_s1, float* restrict tmp_cells_s2, 
                                    float* restrict tmp_cells_s3, float* restrict tmp_cells_s4, float* restrict tmp_cells_s5, 
-                                   float* restrict tmp_cells_s6, float* restrict tmp_cells_s7, float* restrict tmp_cells_s8, int* restrict obstacles)
+                                   float* restrict tmp_cells_s6, float* restrict tmp_cells_s7, float* restrict tmp_cells_s8, int* restrict obstacles,
+                                   int start_row, int end_row)
 { 
   const float w0 = 4.f / 9.f;  /* weighting factor */
   const float w1 = 1.f / 9.f;  /* weighting factor */
@@ -319,6 +328,7 @@ float grid_ops(const t_param params, const float* restrict cells_s0, const float
   float local_density_i;
   float tot_u = 0.00f;
   int tot_cells = 0;
+  int local_rows = end_row - start_row + 1;
 
   __assume_aligned(obstacles, 64);
   __assume_aligned(cells_s0, 64);
@@ -343,13 +353,14 @@ float grid_ops(const t_param params, const float* restrict cells_s0, const float
   __assume((params.nx) % 4 == 0);
   __assume((params.nx) % 8 == 0);
   __assume((params.nx) % 16 == 0);
-  for (int jj = 0; jj < params.ny; jj++)
+  for (int jj = 0; jj < local_rows; jj++)
   { 
     for (int ii = 0; ii < params.nx; ii++)
     {
-      const int y_n = (jj + 1) % params.ny;
+      //not accounting for halo exchange yet
+      const int y_n = (jj + 1) % local_rows;
       const int x_e = (ii + 1) % params.nx;
-      const int y_s = (jj == 0) ? (jj + params.ny - 1) : (jj - 1);
+      const int y_s = (jj == 0) ? (jj + local_rows - 1) : (jj - 1);
       const int x_w = (ii == 0) ? (ii + params.nx - 1) : (ii - 1);
       /* propagate densities from neighbouring cells, following
       ** appropriate directions of travel and writing into
@@ -522,7 +533,7 @@ float av_velocity(const t_param params, float* restrict cells_s0, float* restric
 
 int initialise(const char* paramfile, const char* obstaclefile,
                t_param* params, t_speed* cells_ptr, t_speed* tmp_cells_ptr,
-               int** obstacles_ptr, float** av_vels_ptr, int size)
+               int** obstacles_ptr, float** av_vels_ptr, int rank, int size, int* out)
 {
   char   message[1024];  /* message buffer */
   FILE*   fp;            /* file pointer */
@@ -590,21 +601,26 @@ int initialise(const char* paramfile, const char* obstaclefile,
   ** a 1D array of these structs.
   */
 
-  int num_cells = (params->nx * params->ny)/size;
-  int rem = (params->nx * params->ny)%size;
-
-  
+  int local_rows = params->ny/size;
+  int rem = params->ny%size;
+  local_rows += (rank == 0) ? rem : 0;
+  printf("%d \n", local_rows);
+  int start_row = (rank == 0) ? 0 : (rank*local_rows) + rem;
+  int end_row = start_row + local_rows - 1;  
+  out[0] = local_rows; 
+  out[1] = start_row; 
+  out[2] = end_row;  
 
   /* main grid */
-  (*cells_ptr).s0 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
-  (*cells_ptr).s1 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
-  (*cells_ptr).s2 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
-  (*cells_ptr).s3 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
-  (*cells_ptr).s4 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
-  (*cells_ptr).s5 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
-  (*cells_ptr).s6 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
-  (*cells_ptr).s7 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
-  (*cells_ptr).s8 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
+  (*cells_ptr).s0 = (float*)_mm_malloc(sizeof(float) * (params->nx*local_rows), 64);
+  (*cells_ptr).s1 = (float*)_mm_malloc(sizeof(float) * (params->nx*local_rows), 64);
+  (*cells_ptr).s2 = (float*)_mm_malloc(sizeof(float) * (params->nx*local_rows), 64);
+  (*cells_ptr).s3 = (float*)_mm_malloc(sizeof(float) * (params->nx*local_rows), 64);
+  (*cells_ptr).s4 = (float*)_mm_malloc(sizeof(float) * (params->nx*local_rows), 64);
+  (*cells_ptr).s5 = (float*)_mm_malloc(sizeof(float) * (params->nx*local_rows), 64);
+  (*cells_ptr).s6 = (float*)_mm_malloc(sizeof(float) * (params->nx*local_rows), 64);
+  (*cells_ptr).s7 = (float*)_mm_malloc(sizeof(float) * (params->nx*local_rows), 64);
+  (*cells_ptr).s8 = (float*)_mm_malloc(sizeof(float) * (params->nx*local_rows), 64);
 
   if ((*cells_ptr).s0 == NULL) die("cannot allocate memory for cells", __LINE__, __FILE__);
   if ((*cells_ptr).s1 == NULL) die("cannot allocate memory for cells", __LINE__, __FILE__);
@@ -617,15 +633,15 @@ int initialise(const char* paramfile, const char* obstaclefile,
   if ((*cells_ptr).s8 == NULL) die("cannot allocate memory for cells", __LINE__, __FILE__);
 
   /* 'helper' grid, used as scratch space */
-  (*tmp_cells_ptr).s0 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
-  (*tmp_cells_ptr).s1 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
-  (*tmp_cells_ptr).s2 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
-  (*tmp_cells_ptr).s3 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
-  (*tmp_cells_ptr).s4 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
-  (*tmp_cells_ptr).s5 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
-  (*tmp_cells_ptr).s6 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
-  (*tmp_cells_ptr).s7 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
-  (*tmp_cells_ptr).s8 = (float*)_mm_malloc(sizeof(float) * (num_cells), 64);
+  (*tmp_cells_ptr).s0 = (float*)_mm_malloc(sizeof(float) * (params->nx*local_rows), 64);
+  (*tmp_cells_ptr).s1 = (float*)_mm_malloc(sizeof(float) * (params->nx*local_rows), 64);
+  (*tmp_cells_ptr).s2 = (float*)_mm_malloc(sizeof(float) * (params->nx*local_rows), 64);
+  (*tmp_cells_ptr).s3 = (float*)_mm_malloc(sizeof(float) * (params->nx*local_rows), 64);
+  (*tmp_cells_ptr).s4 = (float*)_mm_malloc(sizeof(float) * (params->nx*local_rows), 64);
+  (*tmp_cells_ptr).s5 = (float*)_mm_malloc(sizeof(float) * (params->nx*local_rows), 64);
+  (*tmp_cells_ptr).s6 = (float*)_mm_malloc(sizeof(float) * (params->nx*local_rows), 64);
+  (*tmp_cells_ptr).s7 = (float*)_mm_malloc(sizeof(float) * (params->nx*local_rows), 64);
+  (*tmp_cells_ptr).s8 = (float*)_mm_malloc(sizeof(float) * (params->nx*local_rows), 64);
 
   if ((*tmp_cells_ptr).s0 == NULL) die("cannot allocate memory for tmp_cells", __LINE__, __FILE__);
   if ((*tmp_cells_ptr).s1 == NULL) die("cannot allocate memory for tmp_cells", __LINE__, __FILE__);
@@ -638,7 +654,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
   if ((*tmp_cells_ptr).s8 == NULL) die("cannot allocate memory for tmp_cells", __LINE__, __FILE__);
 
   /* the map of obstacles */
-  *obstacles_ptr = malloc(sizeof(int) * (num_cells));
+  *obstacles_ptr = malloc(sizeof(int) * (params->nx*local_rows));
 
   if (*obstacles_ptr == NULL) die("cannot allocate column memory for obstacles", __LINE__, __FILE__);
 
@@ -647,7 +663,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
   float w1 = params->density      / 9.f;
   float w2 = params->density      / 36.f;
 
-  for (int jj = 0; jj < params->ny; jj++)
+  for (int jj = 0; jj < local_rows; jj++)
   {
     for (int ii = 0; ii < params->nx; ii++)
     {
@@ -668,7 +684,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
 
   for (int jj = 0; jj < params->ny; jj++)
   {
-    for (int ii = 0; ii < params->nx; ii++)
+    for (int ii = 0; ii < local_rows; ii++)
     {
       /* centre */
       (*tmp_cells_ptr).s0[ii + jj*params->nx] = 0.00f;
@@ -688,12 +704,11 @@ int initialise(const char* paramfile, const char* obstaclefile,
   /* first set all cells in obstacle array to zero */
   for (int jj = 0; jj < params->ny; jj++)
   {
-    for (int ii = 0; ii < params->nx; ii++)
+    for (int ii = 0; ii < local_rows; ii++)
     {
       (*obstacles_ptr)[ii + jj*params->nx] = 0;
     }
   }
-
   /* open the obstacle data file */
   fp = fopen(obstaclefile, "r");
 
@@ -702,6 +717,8 @@ int initialise(const char* paramfile, const char* obstaclefile,
     sprintf(message, "could not open input obstacles file: %s", obstaclefile);
     die(message, __LINE__, __FILE__);
   }
+
+  int rows_before = (rank == 0) ? 0 : (rank - 1)*local_rows + rem;
 
   /* read-in the blocked cells list */
   while ((retval = fscanf(fp, "%d %d %d\n", &xx, &yy, &blocked)) != EOF)
@@ -716,7 +733,9 @@ int initialise(const char* paramfile, const char* obstaclefile,
     if (blocked != 1) die("obstacle blocked value should be 1", __LINE__, __FILE__);
 
     /* assign to array */
-    (*obstacles_ptr)[xx + yy*params->nx] = blocked;
+    if (yy >= start_row && yy <= end_row) {
+      (*obstacles_ptr)[xx + (yy - rows_before)*params->nx] = blocked;
+    }
   }
 
   /* and close the file */
@@ -728,7 +747,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
   */
   *av_vels_ptr = (float*)malloc(sizeof(float) * params->maxIters);
 
-  return num_cells;
+  return EXIT_SUCCESS;
 }
 
 int finalise(const t_param* params, t_speed* cells_ptr, t_speed* tmp_cells_ptr,

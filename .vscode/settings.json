@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "array": "c",
+        "bitset": "c",
+        "initializer_list": "c"
+    }
+}
