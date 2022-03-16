@@ -113,7 +113,7 @@ float timestep(const t_param params, float* restrict cells_s0, float* restrict c
 int accelerate_flow(const t_param params, float* restrict cells_s0, float* restrict cells_s1, float* restrict cells_s2, 
                                    float* restrict cells_s3, float* restrict cells_s4, float* restrict cells_s5, 
                                    float* restrict cells_s6, float* restrict cells_s7, float* restrict cells_s8, int* restrict obstacles,
-                                   int start_row);
+                                   int local_rows);
 float grid_ops(const t_param params, const float* restrict cells_s0, const float* restrict cells_s1, const float* restrict cells_s2, 
                                    const float* restrict cells_s3, const float* restrict cells_s4, const float* restrict cells_s5, 
                                    const float* restrict cells_s6, const float* restrict cells_s7, const float* restrict cells_s8, 
@@ -121,7 +121,7 @@ float grid_ops(const t_param params, const float* restrict cells_s0, const float
                                    float* restrict tmp_cells_s3, float* restrict tmp_cells_s4, float* restrict tmp_cells_s5, 
                                    float* restrict tmp_cells_s6, float* restrict tmp_cells_s7, float* restrict tmp_cells_s8, int* restrict obstacles,
                                    int start_row, int end_row);
-int write_values(const t_param params, t_speed cells, int* obstacles, float* av_vels);
+int write_values(const t_param params, t_speed cells, int* obstacles, float* av_vels, int local_rows);
 
 /* finalise, including freeing up allocated memory */
 int finalise(const t_param* params, t_speed* cells_ptr, t_speed* tmp_cells_ptr,
@@ -129,7 +129,7 @@ int finalise(const t_param* params, t_speed* cells_ptr, t_speed* tmp_cells_ptr,
 
 /* Sum all the densities in the grid.
 ** The total should remain constant from one timestep to the next. */
-float total_density(const t_param params, t_speed cells);
+float total_density(const t_param params, t_speed cells, int local_rows);
 
 /* compute average velocity */
 float av_velocity(const t_param params, float* restrict cells_s0, float* restrict cells_s1, float* restrict cells_s2, 
@@ -208,10 +208,9 @@ int main(int argc, char* argv[])
 #ifdef DEBUG
     printf("==timestep: %d==\n", tt);
     printf("av velocity: %.12E\n", av_vels[tt]);
-    printf("tot density: %.12E\n", total_density(params, cells));
+    printf("tot density: %.12E\n", total_density(params, cells, local_work[0]));
 #endif
   }
-  
   /* Compute time stops here, collate time starts*/
   gettimeofday(&timstr, NULL);
   comp_toc = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
@@ -233,8 +232,10 @@ int main(int argc, char* argv[])
   printf("Elapsed Compute time:\t\t\t%.6lf (s)\n", comp_toc - comp_tic);
   printf("Elapsed Collate time:\t\t\t%.6lf (s)\n", col_toc  - col_tic);
   printf("Elapsed Total time:\t\t\t%.6lf (s)\n",   tot_toc  - tot_tic);
-  write_values(params, cells, obstacles, av_vels);
+  write_values(params, cells, obstacles, av_vels, local_work[0]);
+  printf("Freeing\n");
   finalise(&params, &cells, &tmp_cells, &obstacles, &av_vels);
+  printf("Freed\n");
   MPI_Finalize();
 
   return EXIT_SUCCESS;
@@ -248,11 +249,11 @@ float timestep(const t_param params, float* restrict cells_s0, float* restrict c
                                    float* restrict tmp_cells_s6, float* restrict tmp_cells_s7, float* restrict tmp_cells_s8, int* obstacles, 
                                    int rank, int size, int start_row, int end_row)
 {
-  if (start_row <= params.ny - 2 || end_row <= params.ny - 2) {
+  if (start_row <= params.ny - 2 && end_row >= params.ny - 2) {
     
     accelerate_flow(params, cells_s0, cells_s1, cells_s2, 
                       cells_s3, cells_s4, cells_s5, 
-                      cells_s6, cells_s7, cells_s8, obstacles, start_row);
+                      cells_s6, cells_s7, cells_s8, obstacles, end_row - start_row + 1);
   }
   return grid_ops(params, cells_s0, cells_s1, cells_s2, 
                      cells_s3, cells_s4, cells_s5, 
@@ -264,14 +265,14 @@ float timestep(const t_param params, float* restrict cells_s0, float* restrict c
 int accelerate_flow(const t_param params, float* restrict cells_s0, float* restrict cells_s1, float* restrict cells_s2, 
                                    float* restrict cells_s3, float* restrict cells_s4, float* restrict cells_s5, 
                                    float* restrict cells_s6, float* restrict cells_s7, float* restrict cells_s8, int* restrict obstacles,
-                                   int start_row)
+                                   int local_rows)
 {
   /* compute weighting factors */
   const float w1 = params.density * params.accel / 9.f;
   const float w2 = params.density * params.accel / 36.f;
 
   /* modify the 2nd row of the grid */
-  int jj = params.ny - start_row - 3;
+  int jj = local_rows - 2;
   __assume_aligned(obstacles, 64);
   __assume_aligned(cells_s0, 64);
   __assume_aligned(cells_s1, 64);
@@ -604,7 +605,6 @@ int initialise(const char* paramfile, const char* obstaclefile,
   int local_rows = params->ny/size;
   int rem = params->ny%size;
   local_rows += (rank == 0) ? rem : 0;
-  printf("%d \n", local_rows);
   int start_row = (rank == 0) ? 0 : (rank*local_rows) + rem;
   int end_row = start_row + local_rows - 1;  
   out[0] = local_rows; 
@@ -653,6 +653,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
   if ((*tmp_cells_ptr).s7 == NULL) die("cannot allocate memory for tmp_cells", __LINE__, __FILE__);
   if ((*tmp_cells_ptr).s8 == NULL) die("cannot allocate memory for tmp_cells", __LINE__, __FILE__);
 
+
   /* the map of obstacles */
   *obstacles_ptr = malloc(sizeof(int) * (params->nx*local_rows));
 
@@ -682,9 +683,9 @@ int initialise(const char* paramfile, const char* obstaclefile,
     }
   }
 
-  for (int jj = 0; jj < params->ny; jj++)
+  for (int jj = 0; jj < local_rows; jj++)
   {
-    for (int ii = 0; ii < local_rows; ii++)
+    for (int ii = 0; ii < params->nx; ii++)
     {
       /* centre */
       (*tmp_cells_ptr).s0[ii + jj*params->nx] = 0.00f;
@@ -702,9 +703,9 @@ int initialise(const char* paramfile, const char* obstaclefile,
   }
 
   /* first set all cells in obstacle array to zero */
-  for (int jj = 0; jj < params->ny; jj++)
+  for (int jj = 0; jj < local_rows; jj++)
   {
-    for (int ii = 0; ii < local_rows; ii++)
+    for (int ii = 0; ii < params->nx; ii++)
     {
       (*obstacles_ptr)[ii + jj*params->nx] = 0;
     }
@@ -718,7 +719,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
     die(message, __LINE__, __FILE__);
   }
 
-  int rows_before = (rank == 0) ? 0 : (rank - 1)*local_rows + rem;
+  //int rows_before = (rank == 0) ? 0 : (rank - 1)*local_rows + rem;
 
   /* read-in the blocked cells list */
   while ((retval = fscanf(fp, "%d %d %d\n", &xx, &yy, &blocked)) != EOF)
@@ -734,7 +735,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
 
     /* assign to array */
     if (yy >= start_row && yy <= end_row) {
-      (*obstacles_ptr)[xx + (yy - rows_before)*params->nx] = blocked;
+      (*obstacles_ptr)[xx + (yy - start_row - 1)*params->nx] = blocked;
     }
   }
 
@@ -813,11 +814,11 @@ float calc_reynolds(const t_param params, t_speed cells, int* obstacles)
                      cells.s6, cells.s7, cells.s8, obstacles) * params.reynolds_dim / viscosity;
 }
 
-float total_density(const t_param params, t_speed cells)
+float total_density(const t_param params, t_speed cells, int local_rows)
 {
   float total = 0.f;  /* accumulator */
 
-  for (int jj = 0; jj < params.ny; jj++)
+  for (int jj = 0; jj < local_rows; jj++)
   {
     for (int ii = 0; ii < params.nx; ii++)
     {
@@ -836,7 +837,7 @@ float total_density(const t_param params, t_speed cells)
   return total;
 }
 
-int write_values(const t_param params, t_speed cells, int* obstacles, float* av_vels)
+int write_values(const t_param params, t_speed cells, int* obstacles, float* av_vels, int local_rows)
 {
   FILE* fp;                     /* file pointer */
   const float c_sq = 1.f / 3.f; /* sq. of speed of sound */
@@ -853,7 +854,7 @@ int write_values(const t_param params, t_speed cells, int* obstacles, float* av_
     die("could not open file output file", __LINE__, __FILE__);
   }
 
-  for (int jj = 0; jj < params.ny; jj++)
+  for (int jj = 0; jj < local_rows; jj++)
   {
     for (int ii = 0; ii < params.nx; ii++)
     {
