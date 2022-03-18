@@ -184,7 +184,6 @@ int main(int argc, char* argv[])
   tot_tic = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
   init_tic=tot_tic;
   initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &obstacles, &av_vels, rank, size);
-
   /* Init time stops here, compute time starts*/
   gettimeofday(&timstr, NULL);
   init_toc = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
@@ -848,7 +847,6 @@ int write_values(const t_param params, t_speed cells, int* obstacles, float* av_
   {
     die("could not open file output file", __LINE__, __FILE__);
   }
-
   for (int jj = 0; jj < params.ny; jj++)
   {
     for (int ii = 0; ii < params.nx; ii++)
@@ -863,7 +861,6 @@ int write_values(const t_param params, t_speed cells, int* obstacles, float* av_
       else
       {
         local_density = 0.f;
-
         local_density = cells.s0[ii + jj*params.nx] + cells.s1[ii + jj*params.nx]
                       + cells.s2[ii + jj*params.nx] + cells.s3[ii + jj*params.nx]
                       + cells.s4[ii + jj*params.nx] + cells.s5[ii + jj*params.nx]
@@ -893,10 +890,9 @@ int write_values(const t_param params, t_speed cells, int* obstacles, float* av_
       }
 
       /* write to file */
-      fprintf(fp, "%d %d %.12E %.12E %.12E %.12E %d\n", ii, jj, u_x, u_y, u, pressure, obstacles[ii * params.nx + jj]);
+      fprintf(fp, "%d %d %.12E %.12E %.12E %.12E %d\n", ii, jj, u_x, u_y, u, pressure, obstacles[ii + jj*params.nx]);
     }
   }
-
   fclose(fp);
 
   fp = fopen(AVVELSFILE, "w");
