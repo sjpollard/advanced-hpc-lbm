@@ -70,7 +70,8 @@ typedef struct
   int    nx;
   int    ny;
   int    start_row;
-  int    end_row;  
+  int    end_row;
+  int    global_cells;   
   int    maxIters;      /* no. of iterations */
   int    reynolds_dim;  /* dimension for Reynolds number */
   float density;       /* density per link */
@@ -101,7 +102,7 @@ typedef struct
 int initialise(const char* paramfile, const char* obstaclefile,
                t_param* params, t_speed* cells_ptr, t_speed* tmp_cells_ptr,
                t_speed* send_buffer, t_speed* receive_buffer,
-               int** obstacles_ptr, float** av_vels_ptr, int rank, int size);
+               int** obstacles_ptr, float** av_vels_ptr, float** av_vels_buffer, int rank, int size);
 
 /*
 ** The main calculation methods.
@@ -174,8 +175,11 @@ int main(int argc, char* argv[])
   t_speed receive_buffer;
   int*     obstacles = NULL;    /* grid indicating which cells are blocked */
   float* av_vels   = NULL;     /* a record of the av. velocity computed for each timestep */
+  float* av_vels_buffer = NULL;
   struct timeval timstr;                                                             /* structure to hold elapsed time */
   double tot_tic, tot_toc, init_tic, init_toc, comp_tic, comp_toc, col_tic, col_toc; /* floating point numbers to calculate elapsed wallclock time */
+  int global_cells = 0;
+  int tot_cells = 0;
 
   /* parse the command line */
   if (argc != 3)
@@ -191,7 +195,14 @@ int main(int argc, char* argv[])
   gettimeofday(&timstr, NULL);
   tot_tic = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
   init_tic=tot_tic;
-  initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &send_buffer, &receive_buffer, &obstacles, &av_vels, rank, size);
+  initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &send_buffer, &receive_buffer, &obstacles, &av_vels, &av_vels_buffer, rank, size);
+  
+  for (int i = 0; i < params.nx * params.ny; i++) {
+    tot_cells += (!obstacles[i]) ? 1 : 0;
+  }
+  MPI_Allreduce(&tot_cells, &global_cells, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD);
+  params.global_cells = global_cells;
+
   /* Init time stops here, compute time starts*/
   gettimeofday(&timstr, NULL);
   init_toc = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
@@ -200,10 +211,10 @@ int main(int argc, char* argv[])
   for (int tt = 0; tt < params.maxIters; tt++)
   {
     //send up, receive down
-    /*for (int ii = 0; ii < params.nx; ii++){
-      send_buffer.s2[ii] = cells.s2[ii + params.end_row * params.nx];
-      send_buffer.s5[ii] = cells.s5[ii + params.end_row * params.nx];
-      send_buffer.s6[ii] = cells.s6[ii + params.end_row * params.nx];
+    for (int ii = 0; ii < params.nx; ii++){
+      send_buffer.s2[ii] = cells.s2[ii + params.ny * params.nx];
+      send_buffer.s5[ii] = cells.s5[ii + params.ny * params.nx];
+      send_buffer.s6[ii] = cells.s6[ii + params.ny * params.nx];
     }
     MPI_Sendrecv(send_buffer.s2, params.nx, MPI_FLOAT, above, 0,
                  receive_buffer.s2, params.nx, MPI_FLOAT, below, 0,
@@ -222,9 +233,9 @@ int main(int argc, char* argv[])
 
     //send down, receive up
     for (int ii = 0; ii < params.nx; ii++){
-      send_buffer.s4[ii] = cells.s4[ii];
-      send_buffer.s7[ii] = cells.s7[ii];
-      send_buffer.s8[ii] = cells.s8[ii];
+      send_buffer.s4[ii] = cells.s4[ii + params.nx];
+      send_buffer.s7[ii] = cells.s7[ii + params.nx];
+      send_buffer.s8[ii] = cells.s8[ii + params.nx];
     }
     MPI_Sendrecv(send_buffer.s4, params.nx, MPI_FLOAT, below, 0,
                  receive_buffer.s4, params.nx, MPI_FLOAT, above, 0,
@@ -236,10 +247,10 @@ int main(int argc, char* argv[])
                  receive_buffer.s8, params.nx, MPI_FLOAT, above, 0,
                  MPI_COMM_WORLD, &status);
     for (int ii = 0; ii < params.nx; ii++){
-      cells.s4[ii + (params.ny - 1) * params.nx] = receive_buffer.s4[ii];
-      cells.s7[ii + (params.ny - 1) * params.nx] = receive_buffer.s7[ii];
-      cells.s8[ii + (params.ny - 1) * params.nx] = receive_buffer.s8[ii];
-    }*/
+      cells.s4[ii + (params.ny + 1) * params.nx] = receive_buffer.s4[ii];
+      cells.s7[ii + (params.ny + 1) * params.nx] = receive_buffer.s7[ii];
+      cells.s8[ii + (params.ny + 1) * params.nx] = receive_buffer.s8[ii];
+    }
     
     av_vels[tt] = timestep(params, cells.s0, cells.s1, cells.s2, 
                      cells.s3, cells.s4, cells.s5, 
@@ -264,6 +275,8 @@ int main(int argc, char* argv[])
   col_tic=comp_toc;
 
   // Collate data from ranks here 
+
+  MPI_Reduce(&av_vels, &av_vels_buffer, params.maxIters, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
 
   /* Total/collate time stops here.*/
   gettimeofday(&timstr, NULL);
@@ -399,9 +412,9 @@ float grid_ops(const t_param params, const float* restrict cells_s0, const float
   { 
     for (int ii = 0; ii < params.nx; ii++)
     {
-      const int y_n = (jj + 1) % (params.ny + 1);
+      const int y_n = jj + 1;
       const int x_e = (ii + 1) % params.nx;
-      const int y_s = (jj == 1) ? (jj + params.ny - 1) : (jj - 1);
+      const int y_s = jj - 1;
       const int x_w = (ii == 0) ? (ii + params.nx - 1) : (ii - 1);
       /* propagate densities from neighbouring cells, following
       ** appropriate directions of travel and writing into
@@ -500,11 +513,10 @@ float grid_ops(const t_param params, const float* restrict cells_s0, const float
                                         + params.omega * (d_equ6 - speed6) : speed8;
       tmp_cells_s8[ii + jj*params.nx] = !obstacles[ii + (jj - 1)*params.nx] ? speed8
                                         + params.omega * (d_equ8 - speed8) : speed6;
-      tot_cells += !obstacles[ii + (jj - 1)*params.nx] ? 1 : 0;
       tot_u += !obstacles[ii + (jj - 1)*params.nx] ? sqrtf(u_sq) : 0.00f;
     }
   }
-  return tot_u / (float)(tot_cells);
+  return tot_u / (float)(params.global_cells);
 }
 
 float av_velocity(const t_param params, float* restrict cells_s0, float* restrict cells_s1, float* restrict cells_s2, 
@@ -533,7 +545,7 @@ float av_velocity(const t_param params, float* restrict cells_s0, float* restric
   /* loop over all non-blocked cells */
   for (int jj = 1; jj < params.ny + 1; jj++)
   { 
-    //#pragma omp simd
+    #pragma omp simd
     for (int ii = 0; ii < params.nx; ii++)
     {
       /* ignore occupied cells */
@@ -567,18 +579,17 @@ float av_velocity(const t_param params, float* restrict cells_s0, float* restric
         /* accumulate the norm of x- and y- velocity components */
         tot_u += sqrtf((u_x * u_x) + (u_y * u_y));
         /* increase counter of inspected cells */
-        ++tot_cells;
       }
     }
   }
 
-  return tot_u / (float)tot_cells;
+  return tot_u / (float)(params.global_cells);
 }
 
 int initialise(const char* paramfile, const char* obstaclefile,
                t_param* params, t_speed* cells_ptr, t_speed* tmp_cells_ptr,
                t_speed* send_buffer, t_speed* receive_buffer,
-               int** obstacles_ptr, float** av_vels_ptr, int rank, int size)
+               int** obstacles_ptr, float** av_vels_ptr, float** av_vels_buffer, int rank, int size)
 {
   char   message[1024];  /* message buffer */
   FILE*   fp;            /* file pointer */
@@ -830,6 +841,9 @@ int initialise(const char* paramfile, const char* obstaclefile,
   ** at each timestep
   */
   *av_vels_ptr = (float*)malloc(sizeof(float) * params->maxIters);
+  if (rank = 0){
+    *av_vels_buffer = (float*)malloc(sizeof(float) * params->maxIters);
+  }
 
   return EXIT_SUCCESS;
 }
