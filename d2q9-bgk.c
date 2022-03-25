@@ -102,7 +102,8 @@ typedef struct
 int initialise(const char* paramfile, const char* obstaclefile,
                t_param* params, t_speed* cells_ptr, t_speed* tmp_cells_ptr,
                t_speed* send_buffer, t_speed* receive_buffer,
-               int** obstacles_ptr, float** av_vels_ptr, int rank, int size);
+               int** obstacles_ptr, float** av_vels_ptr,
+               float** av_vels_buffer_ptr, int rank, int size);
 
 /*
 ** The main calculation methods.
@@ -129,7 +130,7 @@ int write_values(const t_param params, t_speed cells, int* obstacles, float* av_
 /* finalise, including freeing up allocated memory */
 int finalise(const t_param* params, t_speed* cells_ptr, t_speed* tmp_cells_ptr,
              t_speed* send_buffer, t_speed* receive_buffer,
-             int** obstacles_ptr, float** av_vels_ptr);
+             int** obstacles_ptr, float** av_vels_ptr, float** av_vels_buffer_ptr, int rank);
 
 /* Sum all the densities in the grid.
 ** The total should remain constant from one timestep to the next. */
@@ -175,6 +176,7 @@ int main(int argc, char* argv[])
   t_speed receive_buffer;
   int*     obstacles = NULL;    /* grid indicating which cells are blocked */
   float* av_vels   = NULL;     /* a record of the av. velocity computed for each timestep */
+  float* av_vels_buffer = NULL;
   struct timeval timstr;                                                             /* structure to hold elapsed time */
   double tot_tic, tot_toc, init_tic, init_toc, comp_tic, comp_toc, col_tic, col_toc; /* floating point numbers to calculate elapsed wallclock time */
   int tot_cells = 0;
@@ -193,8 +195,7 @@ int main(int argc, char* argv[])
   gettimeofday(&timstr, NULL);
   tot_tic = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
   init_tic=tot_tic;
-  initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &send_buffer, &receive_buffer, &obstacles, &av_vels, rank, size);
-  
+  initialise(paramfile, obstaclefile, &params, &cells, &tmp_cells, &send_buffer, &receive_buffer, &obstacles, &av_vels, &av_vels_buffer, rank, size);
   for (int i = 0; i < params.nx * params.ny; i++) {
     tot_cells += (!obstacles[i]) ? 1 : 0;
   }
@@ -272,11 +273,13 @@ int main(int argc, char* argv[])
   col_tic=comp_toc;
 
   // Collate data from ranks here 
-  float av_vel = 0;
+  /*float av_vel = 0;
   for (int tt = 0; tt < params.maxIters; tt++) {
     MPI_Reduce(&(av_vels[tt]), &av_vel, 1, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
     av_vels[tt] = av_vel;
-  }
+  }*/
+  MPI_Reduce(av_vels, av_vels_buffer, params.maxIters, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
+  if (rank == 0) printf("Rank %d: av_vels_buffer[0] = %f\n", rank, av_vels_buffer[0]);
 
   /* Total/collate time stops here.*/
   gettimeofday(&timstr, NULL);
@@ -286,14 +289,14 @@ int main(int argc, char* argv[])
   /* write final values and free memory */
   if (rank == 0) {
     printf("==done==\n");
-    printf("Reynolds number:\t\t%.12E\n", calc_reynolds(params, cells, obstacles, av_vel));
+    printf("Reynolds number:\t\t%.12E\n", calc_reynolds(params, cells, obstacles, av_vels_buffer[params.maxIters - 1]));
     printf("Elapsed Init time:\t\t\t%.6lf (s)\n",    init_toc - init_tic);
     printf("Elapsed Compute time:\t\t\t%.6lf (s)\n", comp_toc - comp_tic);
     printf("Elapsed Collate time:\t\t\t%.6lf (s)\n", col_toc  - col_tic);
     printf("Elapsed Total time:\t\t\t%.6lf (s)\n",   tot_toc  - tot_tic);
   }
-  write_values(params, cells, obstacles, av_vels, rank, size);
-  finalise(&params, &cells, &tmp_cells, &send_buffer, &receive_buffer, &obstacles, &av_vels);
+  write_values(params, cells, obstacles, av_vels_buffer, rank, size);
+  finalise(&params, &cells, &tmp_cells, &send_buffer, &receive_buffer, &obstacles, &av_vels, &av_vels_buffer, rank);
   MPI_Finalize();
 
   return EXIT_SUCCESS;
@@ -588,7 +591,8 @@ float av_velocity(const t_param params, float* restrict cells_s0, float* restric
 int initialise(const char* paramfile, const char* obstaclefile,
                t_param* params, t_speed* cells_ptr, t_speed* tmp_cells_ptr,
                t_speed* send_buffer, t_speed* receive_buffer,
-               int** obstacles_ptr, float** av_vels_ptr, int rank, int size)
+               int** obstacles_ptr, float** av_vels_ptr,
+               float** av_vels_buffer_ptr, int rank, int size)
 {
   char   message[1024];  /* message buffer */
   FILE*   fp;            /* file pointer */
@@ -659,12 +663,12 @@ int initialise(const char* paramfile, const char* obstaclefile,
   int rows = params->global_ny/size;
   int rows_rem = params->global_ny%size;
   params->nx = params->global_nx;
-  params->ny = rows;
-  int start_row = (rank == 0) ? 0 : (rank * rows);
-  //start_row += ?  :  ;
+  int start_row = rank * rows;
   rows += (rank < rows_rem) ? 1 : 0;
-  int end_row = start_row + rows - 1; 
-  printf("Rank %d, rows %d start row %d end row %d\n", rank, rows, start_row, end_row);
+  params->ny = rows;
+  int cumul_rem = (rank < rows_rem) ? rank : rows_rem;
+  start_row += (rank == 0) ? 0 : cumul_rem;
+  int end_row = start_row + rows - 1;
   params->start_row = start_row;
   params->end_row = end_row;
 
@@ -842,13 +846,16 @@ int initialise(const char* paramfile, const char* obstaclefile,
   ** at each timestep
   */
   *av_vels_ptr = (float*)malloc(sizeof(float) * params->maxIters);
+  if (rank == 0){
+    *av_vels_buffer_ptr = (float*)malloc(sizeof(float) * params->maxIters);
+  }
 
   return EXIT_SUCCESS;
 }
 
 int finalise(const t_param* params, t_speed* cells_ptr, t_speed* tmp_cells_ptr,
              t_speed* send_buffer, t_speed* receive_buffer,
-             int** obstacles_ptr, float** av_vels_ptr)
+             int** obstacles_ptr, float** av_vels_ptr, float** av_vels_buffer_ptr, int rank)
 {
   /*
   ** free up allocated memory
@@ -934,6 +941,11 @@ int finalise(const t_param* params, t_speed* cells_ptr, t_speed* tmp_cells_ptr,
 
   free(*av_vels_ptr);
   *av_vels_ptr = NULL;
+
+  if (rank == 0) {
+    free(*av_vels_buffer_ptr);
+    *av_vels_buffer_ptr = NULL;
+  }
 
   return EXIT_SUCCESS;
 }
