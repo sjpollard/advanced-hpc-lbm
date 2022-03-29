@@ -256,7 +256,7 @@ int main(int argc, char* argv[])
                      tmp_cells.s0, tmp_cells.s1, tmp_cells.s2, 
                      tmp_cells.s3, tmp_cells.s4, tmp_cells.s5, 
                      tmp_cells.s6, tmp_cells.s7, tmp_cells.s8, obstacles);
-    if (tt == 0) printf("Rank %d av_vel[0] %.12E  tot_u %.12E ny %d start_row %d end_row %d\n", rank, av_vels[tt], (av_vels[tt] * params.global_cells), params.ny, params.start_row, params.end_row);
+    //if (tt == 0) printf("Rank %d av_vel[0] %.12E  tot_u %.12E ny %d start_row %d end_row %d\n", rank, av_vels[tt], (av_vels[tt] * params.global_cells), params.ny, params.start_row, params.end_row);
     t_speed temp = cells;
     cells = tmp_cells;
     tmp_cells = temp;
@@ -334,7 +334,7 @@ int accelerate_flow(const t_param params, float* restrict cells_s0, float* restr
   const float w2 = params.density * params.accel / 36.f;
 
   /* modify the 2nd row of the grid */
-  int jj = (params.ny == 0) ? 1 : params.ny - 1;
+  int jj = (params.ny == 1) ? 1 : params.ny - 1;
   __assume_aligned(obstacles, 64);
   __assume_aligned(cells_s0, 64);
   __assume_aligned(cells_s1, 64);
@@ -433,6 +433,8 @@ float grid_ops(const t_param params, const float* restrict cells_s0, const float
       const float speed6 = cells_s6[x_e + y_s*params.nx]; /* north-west */
       const float speed7 = cells_s7[x_e + y_n*params.nx]; /* south-west */
       const float speed8 = cells_s8[x_w + y_n*params.nx]; /* south-east */
+
+      if (params.end_row == 127 && ii == 0 && jj == params.ny - 1) printf("jj: %d %.12E %.12E %.12E %.12E %.12E %.12E %.12E %.12E %.12E \n", jj, speed0, speed1, speed2, speed3, speed4, speed5, speed6, speed7, speed8);
 
       const float local_density = speed0 + speed1 + speed2+ speed3 + speed4 + speed5 + speed6 + speed7 + speed8;
 
