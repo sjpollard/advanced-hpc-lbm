@@ -256,6 +256,7 @@ int main(int argc, char* argv[])
                      tmp_cells.s0, tmp_cells.s1, tmp_cells.s2, 
                      tmp_cells.s3, tmp_cells.s4, tmp_cells.s5, 
                      tmp_cells.s6, tmp_cells.s7, tmp_cells.s8, obstacles);
+    if (tt == 0) printf("Rank %d av_vel[0] %.12E  tot_u %.12E ny %d start_row %d end_row %d\n", rank, av_vels[tt], (av_vels[tt] * params.global_cells), params.ny, params.start_row, params.end_row);
     t_speed temp = cells;
     cells = tmp_cells;
     tmp_cells = temp;
@@ -278,8 +279,11 @@ int main(int argc, char* argv[])
     MPI_Reduce(&(av_vels[tt]), &av_vel, 1, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
     av_vels[tt] = av_vel;
   }*/
+  //printf("Rank %d av_vels[0] = %.12E\n", rank, av_vels[0]);
+  //printf("Rank: %d params.ny: %d start_row %d end_row %d\n", rank, params.ny, params.start_row, params. end_row);
+  //printf("Rank: %d, above: %d, below: %d\n", rank, above, below);
   MPI_Reduce(av_vels, av_vels_buffer, params.maxIters, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
-  if (rank == 0) printf("Rank %d: av_vels_buffer[0] = %f\n", rank, av_vels_buffer[0]);
+  //if (rank == 0) printf("Rank %d: av_vels_buffer[0] = %f\n", rank, av_vels_buffer[0]);
 
   /* Total/collate time stops here.*/
   gettimeofday(&timstr, NULL);
@@ -330,7 +334,7 @@ int accelerate_flow(const t_param params, float* restrict cells_s0, float* restr
   const float w2 = params.density * params.accel / 36.f;
 
   /* modify the 2nd row of the grid */
-  int jj = params.ny - 1;
+  int jj = (params.ny == 0) ? 1 : params.ny - 1;
   __assume_aligned(obstacles, 64);
   __assume_aligned(cells_s0, 64);
   __assume_aligned(cells_s1, 64);
@@ -385,7 +389,6 @@ float grid_ops(const t_param params, const float* restrict cells_s0, const float
 
   float local_density_i;
   float tot_u = 0.00f;
-  int tot_cells = 0;
 
   __assume_aligned(obstacles, 64);
   __assume_aligned(cells_s0, 64);
