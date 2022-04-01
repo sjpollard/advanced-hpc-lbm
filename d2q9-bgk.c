@@ -210,12 +210,30 @@ int main(int argc, char* argv[])
   {
     //send up, receive down
     for (int ii = 0; ii < params.nx; ii++){
+      send_buffer.s0[ii] = cells.s0[ii + params.ny * params.nx];
+      send_buffer.s1[ii] = cells.s1[ii + params.ny * params.nx];
       send_buffer.s2[ii] = cells.s2[ii + params.ny * params.nx];
+      send_buffer.s3[ii] = cells.s3[ii + params.ny * params.nx];
+      send_buffer.s4[ii] = cells.s4[ii + params.ny * params.nx];
       send_buffer.s5[ii] = cells.s5[ii + params.ny * params.nx];
       send_buffer.s6[ii] = cells.s6[ii + params.ny * params.nx];
+      send_buffer.s7[ii] = cells.s7[ii + params.ny * params.nx];
+      send_buffer.s8[ii] = cells.s8[ii + params.ny * params.nx];
     }
+    MPI_Sendrecv(send_buffer.s0, params.nx, MPI_FLOAT, above, 0,
+                 receive_buffer.s0, params.nx, MPI_FLOAT, below, 0,
+                 MPI_COMM_WORLD, &status);
+    MPI_Sendrecv(send_buffer.s1, params.nx, MPI_FLOAT, above, 0,
+                 receive_buffer.s1, params.nx, MPI_FLOAT, below, 0,
+                 MPI_COMM_WORLD, &status);
     MPI_Sendrecv(send_buffer.s2, params.nx, MPI_FLOAT, above, 0,
                  receive_buffer.s2, params.nx, MPI_FLOAT, below, 0,
+                 MPI_COMM_WORLD, &status);
+    MPI_Sendrecv(send_buffer.s3, params.nx, MPI_FLOAT, above, 0,
+                 receive_buffer.s3, params.nx, MPI_FLOAT, below, 0,
+                 MPI_COMM_WORLD, &status);
+    MPI_Sendrecv(send_buffer.s4, params.nx, MPI_FLOAT, above, 0,
+                 receive_buffer.s4, params.nx, MPI_FLOAT, below, 0,
                  MPI_COMM_WORLD, &status);
     MPI_Sendrecv(send_buffer.s5, params.nx, MPI_FLOAT, above, 0,
                  receive_buffer.s5, params.nx, MPI_FLOAT, below, 0,
@@ -223,20 +241,56 @@ int main(int argc, char* argv[])
     MPI_Sendrecv(send_buffer.s6, params.nx, MPI_FLOAT, above, 0,
                  receive_buffer.s6, params.nx, MPI_FLOAT, below, 0,
                  MPI_COMM_WORLD, &status);
+    MPI_Sendrecv(send_buffer.s7, params.nx, MPI_FLOAT, above, 0,
+                 receive_buffer.s7, params.nx, MPI_FLOAT, below, 0,
+                 MPI_COMM_WORLD, &status);
+    MPI_Sendrecv(send_buffer.s8, params.nx, MPI_FLOAT, above, 0,
+                 receive_buffer.s8, params.nx, MPI_FLOAT, below, 0,
+                 MPI_COMM_WORLD, &status);
     for (int ii = 0; ii < params.nx; ii++){
+      cells.s0[ii] = receive_buffer.s0[ii];
+      cells.s1[ii] = receive_buffer.s1[ii];
       cells.s2[ii] = receive_buffer.s2[ii];
+      cells.s3[ii] = receive_buffer.s3[ii];
+      cells.s4[ii] = receive_buffer.s4[ii];
       cells.s5[ii] = receive_buffer.s5[ii];
       cells.s6[ii] = receive_buffer.s6[ii];
+      cells.s7[ii] = receive_buffer.s7[ii];
+      cells.s8[ii] = receive_buffer.s8[ii];
     }
 
     //send down, receive up
     for (int ii = 0; ii < params.nx; ii++){
+      send_buffer.s0[ii] = cells.s0[ii + params.nx];
+      send_buffer.s1[ii] = cells.s1[ii + params.nx];
+      send_buffer.s2[ii] = cells.s2[ii + params.nx];
+      send_buffer.s3[ii] = cells.s3[ii + params.nx];
       send_buffer.s4[ii] = cells.s4[ii + params.nx];
+      send_buffer.s5[ii] = cells.s5[ii + params.nx];
+      send_buffer.s6[ii] = cells.s6[ii + params.nx];
       send_buffer.s7[ii] = cells.s7[ii + params.nx];
       send_buffer.s8[ii] = cells.s8[ii + params.nx];
     }
+    MPI_Sendrecv(send_buffer.s0, params.nx, MPI_FLOAT, below, 0,
+                 receive_buffer.s0, params.nx, MPI_FLOAT, above, 0,
+                 MPI_COMM_WORLD, &status);
+    MPI_Sendrecv(send_buffer.s1, params.nx, MPI_FLOAT, below, 0,
+                 receive_buffer.s1, params.nx, MPI_FLOAT, above, 0,
+                 MPI_COMM_WORLD, &status);
+    MPI_Sendrecv(send_buffer.s2, params.nx, MPI_FLOAT, below, 0,
+                 receive_buffer.s2, params.nx, MPI_FLOAT, above, 0,
+                 MPI_COMM_WORLD, &status);
+    MPI_Sendrecv(send_buffer.s3, params.nx, MPI_FLOAT, below, 0,
+                 receive_buffer.s3, params.nx, MPI_FLOAT, above, 0,
+                 MPI_COMM_WORLD, &status);
     MPI_Sendrecv(send_buffer.s4, params.nx, MPI_FLOAT, below, 0,
                  receive_buffer.s4, params.nx, MPI_FLOAT, above, 0,
+                 MPI_COMM_WORLD, &status);
+    MPI_Sendrecv(send_buffer.s5, params.nx, MPI_FLOAT, below, 0,
+                 receive_buffer.s5, params.nx, MPI_FLOAT, above, 0,
+                 MPI_COMM_WORLD, &status);
+    MPI_Sendrecv(send_buffer.s6, params.nx, MPI_FLOAT, below, 0,
+                 receive_buffer.s6, params.nx, MPI_FLOAT, above, 0,
                  MPI_COMM_WORLD, &status);
     MPI_Sendrecv(send_buffer.s7, params.nx, MPI_FLOAT, below, 0,
                  receive_buffer.s7, params.nx, MPI_FLOAT, above, 0,
@@ -245,11 +299,17 @@ int main(int argc, char* argv[])
                  receive_buffer.s8, params.nx, MPI_FLOAT, above, 0,
                  MPI_COMM_WORLD, &status);
     for (int ii = 0; ii < params.nx; ii++){
+      cells.s0[ii + (params.ny + 1) * params.nx] = receive_buffer.s0[ii];
+      cells.s1[ii + (params.ny + 1) * params.nx] = receive_buffer.s1[ii];
+      cells.s2[ii + (params.ny + 1) * params.nx] = receive_buffer.s2[ii];
+      cells.s3[ii + (params.ny + 1) * params.nx] = receive_buffer.s3[ii];
       cells.s4[ii + (params.ny + 1) * params.nx] = receive_buffer.s4[ii];
+      cells.s5[ii + (params.ny + 1) * params.nx] = receive_buffer.s5[ii];
+      cells.s6[ii + (params.ny + 1) * params.nx] = receive_buffer.s6[ii];
       cells.s7[ii + (params.ny + 1) * params.nx] = receive_buffer.s7[ii];
       cells.s8[ii + (params.ny + 1) * params.nx] = receive_buffer.s8[ii];
     }
-    
+
     av_vels[tt] = timestep(params, cells.s0, cells.s1, cells.s2, 
                      cells.s3, cells.s4, cells.s5, 
                      cells.s6, cells.s7, cells.s8, 
@@ -279,11 +339,11 @@ int main(int argc, char* argv[])
     MPI_Reduce(&(av_vels[tt]), &av_vel, 1, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
     av_vels[tt] = av_vel;
   }*/
-  //printf("Rank %d av_vels[0] = %.12E\n", rank, av_vels[0]);
+  //printf("Rank %d rows %d av_vels[0] = %.12E\n", rank, params.ny, av_vels[0]);
   //printf("Rank: %d params.ny: %d start_row %d end_row %d\n", rank, params.ny, params.start_row, params. end_row);
-  //printf("Rank: %d, above: %d, below: %d\n", rank, above, below);
+  if (rank == 0 || rank == size - 1) printf("Rank: %d, above: %d, below: %d\n", rank, above, below);
   MPI_Reduce(av_vels, av_vels_buffer, params.maxIters, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
-  //if (rank == 0) printf("Rank %d: av_vels_buffer[0] = %f\n", rank, av_vels_buffer[0]);
+  //if (rank == 0) printf("Rank %d: av_vels_buffer[0] = %.12E\n", rank, av_vels_buffer[0]);
 
   /* Total/collate time stops here.*/
   gettimeofday(&timstr, NULL);
@@ -434,7 +494,7 @@ float grid_ops(const t_param params, const float* restrict cells_s0, const float
       const float speed7 = cells_s7[x_e + y_n*params.nx]; /* south-west */
       const float speed8 = cells_s8[x_w + y_n*params.nx]; /* south-east */
 
-      if (params.end_row == 127 && ii == 0 && jj == params.ny - 1) printf("jj: %d %.12E %.12E %.12E %.12E %.12E %.12E %.12E %.12E %.12E \n", jj, speed0, speed1, speed2, speed3, speed4, speed5, speed6, speed7, speed8);
+      //if (params.end_row == 127 && ii == 0 && jj == params.ny - 1) printf("jj: %d %.12E %.12E %.12E %.12E %.12E %.12E %.12E %.12E %.12E \n", jj, speed0, speed1, speed2, speed3, speed4, speed5, speed6, speed7, speed8);
 
       const float local_density = speed0 + speed1 + speed2+ speed3 + speed4 + speed5 + speed6 + speed7 + speed8;
 
