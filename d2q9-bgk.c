@@ -277,7 +277,7 @@ int main(int argc, char* argv[])
   comp_toc = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
   col_tic=comp_toc;
 
-  // Collate data from ranks here 
+  // Collate data from ranks here
   MPI_Reduce(av_vels, av_vels_buffer, params.maxIters, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
 
   /* Total/collate time stops here.*/
@@ -879,14 +879,8 @@ int finalise(const t_param* params, t_speed* cells_ptr, t_speed* tmp_cells_ptr,
   _mm_free((*tmp_cells_ptr).s8);
   (*tmp_cells_ptr).s8 = NULL;
 
-  _mm_free((*send_buffer).s0);
-  (*send_buffer).s0 = NULL;
-  _mm_free((*send_buffer).s1);
-  (*send_buffer).s1 = NULL;
   _mm_free((*send_buffer).s2);
   (*send_buffer).s2 = NULL;
-  _mm_free((*send_buffer).s3);
-  (*send_buffer).s3 = NULL;
   _mm_free((*send_buffer).s4);
   (*send_buffer).s4 = NULL;
   _mm_free((*send_buffer).s5);
@@ -898,14 +892,8 @@ int finalise(const t_param* params, t_speed* cells_ptr, t_speed* tmp_cells_ptr,
   _mm_free((*send_buffer).s8);
   (*send_buffer).s8 = NULL;
 
-  _mm_free((*receive_buffer).s0);
-  (*receive_buffer).s0 = NULL;
-  _mm_free((*receive_buffer).s1);
-  (*receive_buffer).s1 = NULL;
   _mm_free((*receive_buffer).s2);
   (*receive_buffer).s2 = NULL;
-  _mm_free((*receive_buffer).s3);
-  (*receive_buffer).s3 = NULL;
   _mm_free((*receive_buffer).s4);
   (*receive_buffer).s4 = NULL;
   _mm_free((*receive_buffer).s5);
