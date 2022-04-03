@@ -283,7 +283,7 @@ int main(int argc, char* argv[])
   MPI_Reduce(av_vels, av_vels_buffer, params.maxIters, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
   if (rank == 0) {
     for (int jj = 1; jj < params.ny + 1; jj++) {
-      for (int ii = 0; ii < params.nx; ii ++) {
+      for (int ii = 0; ii < params.nx; ii++) {
         obstacles_buffer[ii + (jj - 1) * params.nx] = obstacles[ii + (jj - 1) * params.nx];
         cells_buffer.s0[ii + (jj - 1) * params.nx] = cells.s0[ii + jj * params.nx];
         cells_buffer.s1[ii + (jj - 1) * params.nx] = cells.s1[ii + jj * params.nx];
@@ -296,56 +296,53 @@ int main(int argc, char* argv[])
         cells_buffer.s8[ii + (jj - 1) * params.nx] = cells.s8[ii + jj * params.nx];
       }
     }
-    int rows = params.ny;
-    int rem = params.global_ny % size;
-    int count = 0;
-    int past_rows = params.ny;
-    printf("%d\n", past_rows);
-    for (int i = 1; i < size; i++) {
-      count = (i < rem) ? rows : rows - 1;
-      printf("rank %d Recv %d\n", i, count * params.nx);
-      printf("%d\n", past_rows);
-      MPI_Recv(&obstacles, count * params.nx, MPI_INT, i, 0, MPI_COMM_WORLD, &status);
-      MPI_Recv((void*)&(cells.s0), count * params.nx, MPI_FLOAT, i, 0, MPI_COMM_WORLD, &status);
-      MPI_Recv((void*)&(cells.s1), count * params.nx, MPI_FLOAT, i, 0, MPI_COMM_WORLD, &status);
-      MPI_Recv((void*)&(cells.s2), count * params.nx, MPI_FLOAT, i, 0, MPI_COMM_WORLD, &status);
-      MPI_Recv((void*)&(cells.s3), count * params.nx, MPI_FLOAT, i, 0, MPI_COMM_WORLD, &status);
-      MPI_Recv((void*)&(cells.s4), count * params.nx, MPI_FLOAT, i, 0, MPI_COMM_WORLD, &status);
-      MPI_Recv((void*)&(cells.s5), count * params.nx, MPI_FLOAT, i, 0, MPI_COMM_WORLD, &status);
-      MPI_Recv((void*)&(cells.s6), count * params.nx, MPI_FLOAT, i, 0, MPI_COMM_WORLD, &status);
-      MPI_Recv((void*)&(cells.s7), count * params.nx, MPI_FLOAT, i, 0, MPI_COMM_WORLD, &status);
-      MPI_Recv((void*)&(cells.s8), count * params.nx, MPI_FLOAT, i, 0, MPI_COMM_WORLD, &status);
-      printf("%d\n", params.ny);
-      printf("rank %d past_rows %d\n", i, past_rows);
-      for (int jj = 0; jj < count; jj++) {
-        for (int ii = 0; ii < params.nx; ii++) {
-          obstacles_buffer[ii + (jj + past_rows) * params.nx] = obstacles[ii + jj * params.nx];
-          cells_buffer.s0[ii + (jj + past_rows) * params.nx] = cells.s0[ii + jj * params.nx];
-          cells_buffer.s1[ii + (jj + past_rows) * params.nx] = cells.s1[ii + jj * params.nx];
-          cells_buffer.s2[ii + (jj + past_rows) * params.nx] = cells.s2[ii + jj * params.nx];
-          cells_buffer.s3[ii + (jj + past_rows) * params.nx] = cells.s3[ii + jj * params.nx];
-          cells_buffer.s4[ii + (jj + past_rows) * params.nx] = cells.s4[ii + jj * params.nx];
-          cells_buffer.s5[ii + (jj + past_rows) * params.nx] = cells.s5[ii + jj * params.nx];
-          cells_buffer.s6[ii + (jj + past_rows) * params.nx] = cells.s6[ii + jj * params.nx];
-          cells_buffer.s7[ii + (jj + past_rows) * params.nx] = cells.s7[ii + jj * params.nx];
-          cells_buffer.s8[ii + (jj + past_rows) * params.nx] = cells.s8[ii + jj * params.nx];
+    if (size > 1) {
+      int rows = params.ny;
+      int rem = params.global_ny % size;
+      int count = 0;
+      int past_rows = params.ny;
+      for (int i = 1; i < size; i++) {
+        count = (i < rem || rem == 0) ? rows : rows - 1;
+        MPI_Recv(obstacles, (count + 2) * params.nx, MPI_INT, i, 0, MPI_COMM_WORLD, &status);
+        MPI_Recv(cells.s0, (count + 2) * params.nx, MPI_FLOAT, i, 0, MPI_COMM_WORLD, &status);
+        MPI_Recv(cells.s1, (count + 2) * params.nx, MPI_FLOAT, i, 0, MPI_COMM_WORLD, &status);
+        MPI_Recv(cells.s2, (count + 2) * params.nx, MPI_FLOAT, i, 0, MPI_COMM_WORLD, &status);
+        MPI_Recv(cells.s3, (count + 2) * params.nx, MPI_FLOAT, i, 0, MPI_COMM_WORLD, &status);
+        MPI_Recv(cells.s4, (count + 2) * params.nx, MPI_FLOAT, i, 0, MPI_COMM_WORLD, &status);
+        MPI_Recv(cells.s5, (count + 2) * params.nx, MPI_FLOAT, i, 0, MPI_COMM_WORLD, &status);
+        MPI_Recv(cells.s6, (count + 2) * params.nx, MPI_FLOAT, i, 0, MPI_COMM_WORLD, &status);
+        MPI_Recv(cells.s7, (count + 2) * params.nx, MPI_FLOAT, i, 0, MPI_COMM_WORLD, &status);
+        MPI_Recv(cells.s8, (count + 2) * params.nx, MPI_FLOAT, i, 0, MPI_COMM_WORLD, &status);
+        for (int jj = 0; jj < count; jj++) {
+          for (int ii = 0; ii < params.nx; ii++) {
+            obstacles_buffer[ii + (jj + past_rows) * params.nx] = obstacles[ii + jj * params.nx];
+            cells_buffer.s0[ii + (jj + past_rows) * params.nx] = cells.s0[ii + (jj + 1) * params.nx];
+            cells_buffer.s1[ii + (jj + past_rows) * params.nx] = cells.s1[ii + (jj + 1) * params.nx];
+            cells_buffer.s2[ii + (jj + past_rows) * params.nx] = cells.s2[ii + (jj + 1) * params.nx];
+            cells_buffer.s3[ii + (jj + past_rows) * params.nx] = cells.s3[ii + (jj + 1) * params.nx];
+            cells_buffer.s4[ii + (jj + past_rows) * params.nx] = cells.s4[ii + (jj + 1) * params.nx];
+            cells_buffer.s5[ii + (jj + past_rows) * params.nx] = cells.s5[ii + (jj + 1) * params.nx];
+            cells_buffer.s6[ii + (jj + past_rows) * params.nx] = cells.s6[ii + (jj + 1) * params.nx];
+            cells_buffer.s7[ii + (jj + past_rows) * params.nx] = cells.s7[ii + (jj + 1) * params.nx];
+            cells_buffer.s8[ii + (jj + past_rows) * params.nx] = cells.s8[ii + (jj + 1) * params.nx];
+          }
         }
+        past_rows += count;
       }
-      past_rows += count;
-      printf("Here?\n");
     }
   }
-  printf("rank %d Send %d\n", rank, params.ny * params.nx);
-  MPI_Send(&obstacles, params.ny * params.nx, MPI_INT, 0, 0, MPI_COMM_WORLD);
-  MPI_Send((void*)&(cells.s0), params.ny * params.nx, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-  MPI_Send((void*)&(cells.s1), params.ny * params.nx, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-  MPI_Send((void*)&(cells.s2), params.ny * params.nx, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-  MPI_Send((void*)&(cells.s3), params.ny * params.nx, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-  MPI_Send((void*)&(cells.s4), params.ny * params.nx, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-  MPI_Send((void*)&(cells.s5), params.ny * params.nx, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-  MPI_Send((void*)&(cells.s6), params.ny * params.nx, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-  MPI_Send((void*)&(cells.s7), params.ny * params.nx, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
-  MPI_Send((void*)&(cells.s8), params.ny * params.nx, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+  if (rank > 0 && size > 1) {
+    MPI_Send(obstacles, params.ny * params.nx, MPI_INT, 0, 0, MPI_COMM_WORLD);
+    MPI_Send(cells.s0, (params.ny + 2) * params.nx, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+    MPI_Send(cells.s1, (params.ny + 2) * params.nx, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+    MPI_Send(cells.s2, (params.ny + 2) * params.nx, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+    MPI_Send(cells.s3, (params.ny + 2) * params.nx, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+    MPI_Send(cells.s4, (params.ny + 2) * params.nx, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+    MPI_Send(cells.s5, (params.ny + 2) * params.nx, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+    MPI_Send(cells.s6, (params.ny + 2) * params.nx, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+    MPI_Send(cells.s7, (params.ny + 2) * params.nx, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+    MPI_Send(cells.s8, (params.ny + 2) * params.nx, MPI_FLOAT, 0, 0, MPI_COMM_WORLD);
+  }
 
   /* Total/collate time stops here.*/
   gettimeofday(&timstr, NULL);
@@ -1058,7 +1055,7 @@ int write_values(const t_param params, t_speed cells, int* obstacles, float* av_
   {
     die("could not open file output file", __LINE__, __FILE__);
   }
-  for (int jj = 0; jj < params.ny; jj++)
+  for (int jj = 0; jj < params.global_ny; jj++)
   {
     for (int ii = 0; ii < params.nx; ii++)
     {
@@ -1077,7 +1074,6 @@ int write_values(const t_param params, t_speed cells, int* obstacles, float* av_
                       + cells.s4[ii + jj*params.nx] + cells.s5[ii + jj*params.nx]
                       + cells.s6[ii + jj*params.nx] + cells.s7[ii + jj*params.nx]
                       + cells.s8[ii + jj*params.nx];
-
         /* compute x velocity component */
         u_x = (cells.s1[ii + jj*params.nx]
               + cells.s5[ii + jj*params.nx]
@@ -1099,7 +1095,6 @@ int write_values(const t_param params, t_speed cells, int* obstacles, float* av_
         /* compute pressure */
         pressure = local_density * c_sq;
       }
-
       /* write to file */
       fprintf(fp, "%d %d %.12E %.12E %.12E %.12E %d\n", ii, jj, u_x, u_y, u, pressure, obstacles[ii + jj*params.nx]);
     }
