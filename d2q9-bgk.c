@@ -101,7 +101,7 @@ typedef struct
 /* load params, allocate memory, load obstacles & initialise fluid particle densities */
 int initialise(const char* paramfile, const char* obstaclefile,
                t_param* params, t_speed* cells_ptr, t_speed* tmp_cells_ptr, t_speed* cells_buffer_ptr,
-               t_speed* send_buffer, t_speed* receive_buffer,
+               float** send_buffer_ptr, float** receive_buffer_ptr,
                int** obstacles_ptr, int** obstacles_buffer_ptr, float** av_vels_ptr,
                float** av_vels_buffer_ptr, int rank, int size);
 
@@ -129,7 +129,7 @@ int write_values(const t_param params, t_speed cells, int* obstacles, float* av_
 
 /* finalise, including freeing up allocated memory */
 int finalise(const t_param* params, t_speed* cells_ptr, t_speed* tmp_cells_ptr, t_speed* cells_buffer_ptr,
-             t_speed* send_buffer, t_speed* receive_buffer,
+             float** send_buffer_ptr, float** receive_buffer_ptr,
              int** obstacles_ptr, int** obstacles_buffer_ptr, float** av_vels_ptr, float** av_vels_buffer_ptr, int rank);
 
 /* Sum all the densities in the grid.
@@ -173,8 +173,8 @@ int main(int argc, char* argv[])
   t_speed cells;     //= NULL;    /* grid containing fluid densities */
   t_speed tmp_cells; //= NULL;    /* scratch space */
   t_speed cells_buffer;
-  t_speed send_buffer;
-  t_speed receive_buffer;
+  float* send_buffer = NULL;
+  float* receive_buffer = NULL;
   int*     obstacles = NULL;    /* grid indicating which cells are blocked */
   int*     obstacles_buffer = NULL;
   float* av_vels   = NULL;     /* a record of the av. velocity computed for each timestep */
@@ -217,44 +217,32 @@ int main(int argc, char* argv[])
     }
     //send up, receive down
     for (int ii = 0; ii < params.nx; ii++){
-      send_buffer.s2[ii] = cells.s2[ii + params.ny * params.nx];
-      send_buffer.s5[ii] = cells.s5[ii + params.ny * params.nx];
-      send_buffer.s6[ii] = cells.s6[ii + params.ny * params.nx];
+      send_buffer[ii] = cells.s2[ii + params.ny * params.nx];
+      send_buffer[ii + params.nx] = cells.s5[ii + params.ny * params.nx];
+      send_buffer[ii + 2 * params.nx] = cells.s6[ii + params.ny * params.nx];
     }
-    MPI_Sendrecv(send_buffer.s2, params.nx, MPI_FLOAT, above, 0,
-                 receive_buffer.s2, params.nx, MPI_FLOAT, below, 0,
-                 MPI_COMM_WORLD, &status);
-    MPI_Sendrecv(send_buffer.s5, params.nx, MPI_FLOAT, above, 0,
-                 receive_buffer.s5, params.nx, MPI_FLOAT, below, 0,
-                 MPI_COMM_WORLD, &status);
-    MPI_Sendrecv(send_buffer.s6, params.nx, MPI_FLOAT, above, 0,
-                 receive_buffer.s6, params.nx, MPI_FLOAT, below, 0,
+    MPI_Sendrecv(send_buffer, 3 * params.nx, MPI_FLOAT, above, 0,
+                 receive_buffer, 3 * params.nx, MPI_FLOAT, below, 0,
                  MPI_COMM_WORLD, &status);
     for (int ii = 0; ii < params.nx; ii++){
-      cells.s2[ii] = receive_buffer.s2[ii];
-      cells.s5[ii] = receive_buffer.s5[ii];
-      cells.s6[ii] = receive_buffer.s6[ii];
+      cells.s2[ii] = receive_buffer[ii];
+      cells.s5[ii] = receive_buffer[ii + params.nx];
+      cells.s6[ii] = receive_buffer[ii + 2 * params.nx];
     }
 
     //send down, receive up
     for (int ii = 0; ii < params.nx; ii++){
-      send_buffer.s4[ii] = cells.s4[ii + params.nx];
-      send_buffer.s7[ii] = cells.s7[ii + params.nx];
-      send_buffer.s8[ii] = cells.s8[ii + params.nx];
+      send_buffer[ii] = cells.s4[ii + params.nx];
+      send_buffer[ii + params.nx] = cells.s7[ii + params.nx];
+      send_buffer[ii + 2 * params.nx] = cells.s8[ii + params.nx];
     }
-    MPI_Sendrecv(send_buffer.s4, params.nx, MPI_FLOAT, below, 0,
-                 receive_buffer.s4, params.nx, MPI_FLOAT, above, 0,
-                 MPI_COMM_WORLD, &status);
-    MPI_Sendrecv(send_buffer.s7, params.nx, MPI_FLOAT, below, 0,
-                 receive_buffer.s7, params.nx, MPI_FLOAT, above, 0,
-                 MPI_COMM_WORLD, &status);
-    MPI_Sendrecv(send_buffer.s8, params.nx, MPI_FLOAT, below, 0,
-                 receive_buffer.s8, params.nx, MPI_FLOAT, above, 0,
+    MPI_Sendrecv(send_buffer, 3 * params.nx, MPI_FLOAT, below, 0,
+                 receive_buffer, 3 * params.nx, MPI_FLOAT, above, 0,
                  MPI_COMM_WORLD, &status);
     for (int ii = 0; ii < params.nx; ii++){
-      cells.s4[ii + (params.ny + 1) * params.nx] = receive_buffer.s4[ii];
-      cells.s7[ii + (params.ny + 1) * params.nx] = receive_buffer.s7[ii];
-      cells.s8[ii + (params.ny + 1) * params.nx] = receive_buffer.s8[ii];
+      cells.s4[ii + (params.ny + 1) * params.nx] = receive_buffer[ii];
+      cells.s7[ii + (params.ny + 1) * params.nx] = receive_buffer[ii + params.nx];
+      cells.s8[ii + (params.ny + 1) * params.nx] = receive_buffer[ii + 2 * params.nx];
     }
 
     av_vels[tt] = timestep(params, cells.s0, cells.s1, cells.s2, 
@@ -647,7 +635,7 @@ float av_velocity(const t_param params, float* restrict cells_s0, float* restric
 
 int initialise(const char* paramfile, const char* obstaclefile,
                t_param* params, t_speed* cells_ptr, t_speed* tmp_cells_ptr, t_speed* cells_buffer_ptr,
-               t_speed* send_buffer, t_speed* receive_buffer,
+               float** send_buffer_ptr, float** receive_buffer_ptr,
                int** obstacles_ptr, int** obstacles_buffer_ptr, float** av_vels_ptr,
                float** av_vels_buffer_ptr, int rank, int size)
 {
@@ -771,33 +759,11 @@ int initialise(const char* paramfile, const char* obstaclefile,
   if ((*tmp_cells_ptr).s7 == NULL) die("cannot allocate memory for tmp_cells", __LINE__, __FILE__);
   if ((*tmp_cells_ptr).s8 == NULL) die("cannot allocate memory for tmp_cells", __LINE__, __FILE__);
 
-  (*send_buffer).s2 = (float*)_mm_malloc(sizeof(float) * (params->nx), 64);
-  (*send_buffer).s4 = (float*)_mm_malloc(sizeof(float) * (params->nx), 64);
-  (*send_buffer).s5 = (float*)_mm_malloc(sizeof(float) * (params->nx), 64);
-  (*send_buffer).s6 = (float*)_mm_malloc(sizeof(float) * (params->nx), 64);
-  (*send_buffer).s7 = (float*)_mm_malloc(sizeof(float) * (params->nx), 64);
-  (*send_buffer).s8 = (float*)_mm_malloc(sizeof(float) * (params->nx), 64);
 
-  if ((*send_buffer).s2 == NULL) die("cannot allocate memory for send_buffer", __LINE__, __FILE__);
-  if ((*send_buffer).s4 == NULL) die("cannot allocate memory for send_buffer", __LINE__, __FILE__);
-  if ((*send_buffer).s5 == NULL) die("cannot allocate memory for send_buffer", __LINE__, __FILE__);
-  if ((*send_buffer).s6 == NULL) die("cannot allocate memory for send_buffer", __LINE__, __FILE__);
-  if ((*send_buffer).s7 == NULL) die("cannot allocate memory for send_buffer", __LINE__, __FILE__);
-  if ((*send_buffer).s8 == NULL) die("cannot allocate memory for send_buffer", __LINE__, __FILE__);
-
-  (*receive_buffer).s2 = (float*)_mm_malloc(sizeof(float) * (params->nx), 64);
-  (*receive_buffer).s4 = (float*)_mm_malloc(sizeof(float) * (params->nx), 64);
-  (*receive_buffer).s5 = (float*)_mm_malloc(sizeof(float) * (params->nx), 64);
-  (*receive_buffer).s6 = (float*)_mm_malloc(sizeof(float) * (params->nx), 64);
-  (*receive_buffer).s7 = (float*)_mm_malloc(sizeof(float) * (params->nx), 64);
-  (*receive_buffer).s8 = (float*)_mm_malloc(sizeof(float) * (params->nx), 64);
-
-  if ((*receive_buffer).s2 == NULL) die("cannot allocate memory for receive_buffer", __LINE__, __FILE__);
-  if ((*receive_buffer).s4 == NULL) die("cannot allocate memory for receive_buffer", __LINE__, __FILE__);
-  if ((*receive_buffer).s5 == NULL) die("cannot allocate memory for receive_buffer", __LINE__, __FILE__);
-  if ((*receive_buffer).s6 == NULL) die("cannot allocate memory for receive_buffer", __LINE__, __FILE__);
-  if ((*receive_buffer).s7 == NULL) die("cannot allocate memory for receive_buffer", __LINE__, __FILE__);
-  if ((*receive_buffer).s8 == NULL) die("cannot allocate memory for receive_buffer", __LINE__, __FILE__);
+  *send_buffer_ptr = (float*)_mm_malloc(sizeof(float) * (params->nx) * 3, 64);
+  if (*send_buffer_ptr == NULL) die("cannot allocate memory for send_buffer", __LINE__, __FILE__);
+  *receive_buffer_ptr = (float*)_mm_malloc(sizeof(float) * (params->nx) * 3, 64);
+  if (*receive_buffer_ptr == NULL) die("cannot allocate memory for receive_buffer", __LINE__, __FILE__);
 
   /* the map of obstacles */
   *obstacles_ptr = malloc(sizeof(int) * (params->ny * params->nx));
@@ -909,7 +875,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
 }
 
 int finalise(const t_param* params, t_speed* cells_ptr, t_speed* tmp_cells_ptr, t_speed* cells_buffer_ptr,
-             t_speed* send_buffer, t_speed* receive_buffer,
+             float** send_buffer_ptr, float** receive_buffer_ptr,
              int** obstacles_ptr, int** obstacles_buffer_ptr, float** av_vels_ptr, float** av_vels_buffer_ptr, int rank)
 {
   /*
@@ -953,31 +919,10 @@ int finalise(const t_param* params, t_speed* cells_ptr, t_speed* tmp_cells_ptr, 
   _mm_free((*tmp_cells_ptr).s8);
   (*tmp_cells_ptr).s8 = NULL;
 
-  _mm_free((*send_buffer).s2);
-  (*send_buffer).s2 = NULL;
-  _mm_free((*send_buffer).s4);
-  (*send_buffer).s4 = NULL;
-  _mm_free((*send_buffer).s5);
-  (*send_buffer).s5 = NULL;
-  _mm_free((*send_buffer).s6);
-  (*send_buffer).s6 = NULL;
-  _mm_free((*send_buffer).s7);
-  (*send_buffer).s7 = NULL;
-  _mm_free((*send_buffer).s8);
-  (*send_buffer).s8 = NULL;
-
-  _mm_free((*receive_buffer).s2);
-  (*receive_buffer).s2 = NULL;
-  _mm_free((*receive_buffer).s4);
-  (*receive_buffer).s4 = NULL;
-  _mm_free((*receive_buffer).s5);
-  (*receive_buffer).s5 = NULL;
-  _mm_free((*receive_buffer).s6);
-  (*receive_buffer).s6 = NULL;
-  _mm_free((*receive_buffer).s7);
-  (*receive_buffer).s7 = NULL;
-  _mm_free((*receive_buffer).s8);
-  (*receive_buffer).s8 = NULL;
+  _mm_free(*send_buffer_ptr);
+  *send_buffer_ptr = NULL;
+  _mm_free(*receive_buffer_ptr);
+  *receive_buffer_ptr = NULL;
 
   free(*obstacles_ptr);
   *obstacles_ptr = NULL;
