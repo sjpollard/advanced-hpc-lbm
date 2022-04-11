@@ -57,6 +57,7 @@
 #include <sys/resource.h>
 #include <malloc.h>
 #include <mpi.h>
+#include <omp.h>
 
 #define NSPEEDS         9
 #define FINALSTATEFILE  "final_state.dat"
@@ -163,6 +164,9 @@ int main(int argc, char* argv[])
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  #pragma omp parallel
+    printf("%d\n", omp_get_thread_num());
 
   int above = (rank + 1) % size;
   int below = (rank == 0) ? (size - 1) : (rank - 1);
