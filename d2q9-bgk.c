@@ -155,7 +155,11 @@ void usage(const char* exe);
 */
 int main(int argc, char* argv[])
 {
-  MPI_Init(&argc, &argv);
+  int provided;
+  MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);
+  if (provided != MPI_THREAD_FUNNELED) {
+    printf("Thread support failure\n");
+  }
 
   MPI_Status status;
   int rank;
@@ -166,7 +170,7 @@ int main(int argc, char* argv[])
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   #pragma omp parallel
-    printf("%d\n", omp_get_thread_num());
+  printf("Hello from %d on thread %d\n", rank, omp_get_thread_num());
 
   int above = (rank + 1) % size;
   int below = (rank == 0) ? (size - 1) : (rank - 1);
@@ -459,8 +463,10 @@ float grid_ops(const t_param params, const float* restrict cells_s0, const float
   __assume((params.nx) % 4 == 0);
   __assume((params.nx) % 8 == 0);
   __assume((params.nx) % 16 == 0);
+  #pragma omp parallel for reduction(+:tot_u)
   for (int jj = 1; jj < params.ny + 1; jj++)
   { 
+    #pragma omp simd
     for (int ii = 0; ii < params.nx; ii++)
     {
       const int y_n = jj + 1;
@@ -596,7 +602,7 @@ float av_velocity(const t_param params, float* restrict cells_s0, float* restric
   /* loop over all non-blocked cells */
   for (int jj = 1; jj < params.ny + 1; jj++)
   { 
-    #pragma omp simd
+    //#pragma omp simd
     for (int ii = 0; ii < params.nx; ii++)
     {
       /* ignore occupied cells */
@@ -779,6 +785,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
   float w1 = params->density      / 9.f;
   float w2 = params->density      / 36.f;
 
+  //#pragma omp parallel for
   for (int jj = 1; jj < params->ny + 1; jj++)
   {
     for (int ii = 0; ii < params->nx; ii++)
@@ -798,6 +805,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
     }
   }
 
+  //#pragma omp parallel for
   for (int jj = 1; jj < params->ny + 1; jj++)
   {
     for (int ii = 0; ii < params->nx; ii++)
@@ -818,6 +826,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
   }
 
   /* first set all cells in obstacle array to zero */
+  //#pragma omp parallel for
   for (int jj = 0; jj < params->ny; jj++)
   {
     for (int ii = 0; ii < params->nx; ii++)
