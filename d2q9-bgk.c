@@ -279,11 +279,29 @@ int main(int argc, char* argv[])
 
   // Collate data from ranks here
   MPI_Reduce(av_vels, av_vels_buffer, params.maxIters, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
+  write_values(params, cells, obstacles, av_vels_buffer, rank, size);
 
   /* Total/collate time stops here.*/
   gettimeofday(&timstr, NULL);
   col_toc = timstr.tv_sec + (timstr.tv_usec / 1000000.0);
   tot_toc = col_toc;
+
+  FILE* fp; 
+  if (rank == 0){
+    fp = fopen(AVVELSFILE, "w");
+
+    if (fp == NULL)
+    {
+      die("could not open file output file", __LINE__, __FILE__);
+    }
+
+    for (int ii = 0; ii < params.maxIters; ii++)
+    {
+      fprintf(fp, "%d:\t%.12E\n", ii, av_vels[ii]);
+    }
+
+    fclose(fp);
+  }
 
   /* write final values and free memory */
   if (rank == 0) {
@@ -294,7 +312,6 @@ int main(int argc, char* argv[])
     printf("Elapsed Collate time:\t\t\t%.6lf (s)\n", col_toc  - col_tic);
     printf("Elapsed Total time:\t\t\t%.6lf (s)\n",   tot_toc  - tot_tic);
   }
-  write_values(params, cells, obstacles, av_vels_buffer, rank, size);
   finalise(&params, &cells, &tmp_cells, &send_buffer, &receive_buffer, &obstacles, &av_vels, &av_vels_buffer, rank);
   MPI_Finalize();
 
@@ -1013,22 +1030,6 @@ int write_values(const t_param params, t_speed cells, int* obstacles, float* av_
       fclose(fp);
     }
     MPI_Barrier(MPI_COMM_WORLD);
-  }
-
-  if (rank == 0){
-    fp = fopen(AVVELSFILE, "w");
-
-    if (fp == NULL)
-    {
-      die("could not open file output file", __LINE__, __FILE__);
-    }
-
-    for (int ii = 0; ii < params.maxIters; ii++)
-    {
-      fprintf(fp, "%d:\t%.12E\n", ii, av_vels[ii]);
-    }
-
-    fclose(fp);
   }
 
   return EXIT_SUCCESS;
