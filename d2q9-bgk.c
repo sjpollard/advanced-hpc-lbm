@@ -169,9 +169,6 @@ int main(int argc, char* argv[])
 
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  #pragma omp parallel
-  printf("Hello from %d on thread %d\n", rank, omp_get_thread_num());
-
   int above = (rank + 1) % size;
   int below = (rank == 0) ? (size - 1) : (rank - 1);
 
@@ -785,7 +782,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
   float w1 = params->density      / 9.f;
   float w2 = params->density      / 36.f;
 
-  //#pragma omp parallel for
+  #pragma omp parallel for
   for (int jj = 1; jj < params->ny + 1; jj++)
   {
     for (int ii = 0; ii < params->nx; ii++)
@@ -805,7 +802,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
     }
   }
 
-  //#pragma omp parallel for
+  #pragma omp parallel for
   for (int jj = 1; jj < params->ny + 1; jj++)
   {
     for (int ii = 0; ii < params->nx; ii++)
@@ -826,7 +823,7 @@ int initialise(const char* paramfile, const char* obstaclefile,
   }
 
   /* first set all cells in obstacle array to zero */
-  //#pragma omp parallel for
+  #pragma omp parallel for
   for (int jj = 0; jj < params->ny; jj++)
   {
     for (int ii = 0; ii < params->nx; ii++)
