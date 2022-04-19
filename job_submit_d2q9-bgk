@@ -2,6 +2,7 @@
 
 #SBATCH --job-name d2q9-bgk
 #SBATCH --nodes 4
+#SBATCH --ntasks-per-node 28
 #SBATCH --distribution block
 #SBATCH --exclude compute102,compute105,compute109,compute111
 #SBATCH --time 00:05:00
@@ -18,12 +19,12 @@ echo Slurm job ID is $SLURM_JOB_ID
 echo This job runs on the following machines:
 echo `echo $SLURM_JOB_NODELIST | uniq`
 
-#export I_MPI_PIN=on
-#export I_MPI_DEBUG=4 
-
 #! Run the executable
-srun --ntasks-per-node 28 --mpi=pmi2 ./d2q9-bgk input_128x128.params obstacles_128x128.dat
-#srun -n 112 --mpi=pmi2 advixe-cl -collect survey -project-dir ./advisor3 ./d2q9-bgk input_1024x1024.params obstacles_1024x1024.dat
-#srun -n 112 --mpi=pmi2 advixe-cl -collect tripcounts -flop -stacks -project-dir ./advisor3 ./d2q9-bgk input_1024x1024.params obstacles_1024x1024.dat
-#srun --mpi=pmi2 advixe-cl -collect=survey ./d2q9-bgk input_256x256.params obstacles_256x256.dat
-#srun --mpi=pmi2 advixe-cl -collect=survey ./d2q9-bgk input_1024x1024.params obstacles_1024x1024.dat
+srun --mpi=pmi2 ./d2q9-bgk input_128x128.params obstacles_128x128.dat
+make check
+srun --mpi=pmi2 ./d2q9-bgk input_128x256.params obstacles_128x256.dat
+make check REF_FINAL_STATE_FILE=check/128x256.final_state.dat REF_AV_VELS_FILE=check/128x256.av_vels.dat
+srun --mpi=pmi2 ./d2q9-bgk input_256x256.params obstacles_256x256.dat
+make check REF_FINAL_STATE_FILE=check/256x256.final_state.dat REF_AV_VELS_FILE=check/256x256.av_vels.dat
+srun --mpi=pmi2 ./d2q9-bgk input_1024x1024.params obstacles_1024x1024.dat
+make check REF_FINAL_STATE_FILE=check/1024x1024.final_state.dat REF_AV_VELS_FILE=check/1024x1024.av_vels.dat

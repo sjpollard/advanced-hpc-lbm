@@ -1,7 +1,0 @@
-Running on host compute101.bc4.acrc.priv
-Time is Fri Apr 15 15:30:54 BST 2022
-Directory is /user/home/kh19026/assignment2/advanced-hpc-lbm
-Slurm job ID is 10226117
-This job runs on the following machines:
-compute[101,103-104,106]
-0.038641 13.680871 0.003760 13.723272
