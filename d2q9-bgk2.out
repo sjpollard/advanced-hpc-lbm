@@ -1,0 +1,60 @@
+Running on host compute110.bc4.acrc.priv
+Time is Wed Apr 20 18:05:54 BST 2022
+Directory is /user/home/kh19026/assignment2/advanced-hpc-lbm
+Slurm job ID is 10236058
+This job runs on the following machines:
+compute110
+==done==
+Reynolds number:		9.756014823914E+00
+Elapsed Init time:			0.001435 (s)
+Elapsed Compute time:			5.330395 (s)
+Elapsed Collate time:			0.000599 (s)
+Elapsed Total time:			5.332429 (s)
+==done==
+Reynolds number:		9.756014823914E+00
+Elapsed Init time:			0.001443 (s)
+Elapsed Compute time:			5.207994 (s)
+Elapsed Collate time:			0.000620 (s)
+Elapsed Total time:			5.210057 (s)
+==done==
+Reynolds number:		9.756014823914E+00
+Elapsed Init time:			0.001330 (s)
+Elapsed Compute time:			5.423075 (s)
+Elapsed Collate time:			0.000585 (s)
+Elapsed Total time:			5.424990 (s)
+==done==
+Reynolds number:		1.006093597412E+01
+Elapsed Init time:			0.004761 (s)
+Elapsed Compute time:			44.459553 (s)
+Elapsed Collate time:			0.003689 (s)
+Elapsed Total time:			44.468003 (s)
+==done==
+Reynolds number:		1.006093597412E+01
+Elapsed Init time:			0.004569 (s)
+Elapsed Compute time:			44.535341 (s)
+Elapsed Collate time:			0.003716 (s)
+Elapsed Total time:			44.543626 (s)
+==done==
+Reynolds number:		1.006093597412E+01
+Elapsed Init time:			0.004745 (s)
+Elapsed Compute time:			44.441426 (s)
+Elapsed Collate time:			0.003098 (s)
+Elapsed Total time:			44.449269 (s)
+==done==
+Reynolds number:		3.376075029373E+00
+Elapsed Init time:			0.043329 (s)
+Elapsed Compute time:			218.666846 (s)
+Elapsed Collate time:			0.012980 (s)
+Elapsed Total time:			218.723155 (s)
+==done==
+Reynolds number:		3.376075029373E+00
+Elapsed Init time:			0.041265 (s)
+Elapsed Compute time:			222.285450 (s)
+Elapsed Collate time:			0.012978 (s)
+Elapsed Total time:			222.339693 (s)
+==done==
+Reynolds number:		3.376075029373E+00
+Elapsed Init time:			0.040424 (s)
+Elapsed Compute time:			217.475713 (s)
+Elapsed Collate time:			0.012998 (s)
+Elapsed Total time:			217.529135 (s)
