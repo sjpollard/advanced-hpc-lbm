@@ -4,8 +4,8 @@
 #SBATCH --nodes 4
 #SBATCH --ntasks-per-node 28
 #SBATCH --distribution block
-#SBATCH --exclude compute102,compute105,compute109,compute111
-#SBATCH --time 00:05:00
+#SBATCH --exclude compute102,compute105,compute109,compute111,compute300
+#SBATCH --time 00:10:00
 #SBATCH --partition veryshort
 #SBATCH --reservation=COSC026662
 #SBATCH --account=COSC026662
@@ -21,10 +21,10 @@ echo `echo $SLURM_JOB_NODELIST | uniq`
 
 #! Run the executable
 srun --mpi=pmi2 ./d2q9-bgk input_128x128.params obstacles_128x128.dat
-make check
+#make check
 srun --mpi=pmi2 ./d2q9-bgk input_128x256.params obstacles_128x256.dat
-make check REF_FINAL_STATE_FILE=check/128x256.final_state.dat REF_AV_VELS_FILE=check/128x256.av_vels.dat
+#make check REF_FINAL_STATE_FILE=check/128x256.final_state.dat REF_AV_VELS_FILE=check/128x256.av_vels.dat
 srun --mpi=pmi2 ./d2q9-bgk input_256x256.params obstacles_256x256.dat
-make check REF_FINAL_STATE_FILE=check/256x256.final_state.dat REF_AV_VELS_FILE=check/256x256.av_vels.dat
+#make check REF_FINAL_STATE_FILE=check/256x256.final_state.dat REF_AV_VELS_FILE=check/256x256.av_vels.dat
 srun --mpi=pmi2 ./d2q9-bgk input_1024x1024.params obstacles_1024x1024.dat
-make check REF_FINAL_STATE_FILE=check/1024x1024.final_state.dat REF_AV_VELS_FILE=check/1024x1024.av_vels.dat
+#make check REF_FINAL_STATE_FILE=check/1024x1024.final_state.dat REF_AV_VELS_FILE=check/1024x1024.av_vels.dat
